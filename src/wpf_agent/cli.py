@@ -801,6 +801,90 @@ def tickets_open(last, session_id):
     click.echo(ticket_path.read_text(encoding="utf-8"))
 
 
+@tickets.command("create")
+@click.option("--title", required=True, help="Ticket title")
+@click.option("--summary", required=True, help="Summary (1-2 sentences)")
+@click.option("--actual", required=True, help="Actual result")
+@click.option("--expected", required=True, help="Expected result")
+@click.option("--repro", multiple=True, help="Repro step (repeat for multiple)")
+@click.option("--evidence", multiple=True, help="Evidence file path (repeat for multiple)")
+@click.option("--hypothesis", default="", help="Root cause hypothesis")
+@click.option("--pid", default=None, type=int, help="Target PID (added to environment)")
+@click.option("--process", default=None, help="Target process name (added to environment)")
+@click.option("--profile", default=None, help="Profile name (added to environment)")
+def tickets_create(title, summary, actual, expected, repro, evidence, hypothesis, pid, process, profile):
+    """Create a ticket directory with ticket.md and ticket.json."""
+    import shutil
+    import time
+
+    from wpf_agent.constants import TICKET_DIR
+    from wpf_agent.tickets.templates import default_environment, render_ticket_md
+
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    ticket_dir = pathlib.Path(TICKET_DIR) / f"TICKET-{timestamp}"
+    ticket_dir.mkdir(parents=True, exist_ok=True)
+
+    env = default_environment()
+    if pid:
+        env["Target PID"] = str(pid)
+    if process:
+        env["Target Process"] = process
+    if profile:
+        env["Profile"] = profile
+
+    repro_steps = list(repro) if repro else []
+    evidence_files = list(evidence) if evidence else []
+
+    # Copy evidence files into ticket dir
+    screens_dir = ticket_dir / "screens"
+    for ef in evidence_files:
+        src = pathlib.Path(ef)
+        if src.exists():
+            screens_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(str(src), str(screens_dir / src.name))
+
+    # Rebuild evidence list relative to ticket dir
+    packaged_evidence = []
+    if screens_dir.exists():
+        for p in sorted(screens_dir.iterdir()):
+            packaged_evidence.append(f"screens/{p.name}")
+
+    md = render_ticket_md(
+        title=title,
+        summary=summary,
+        repro_steps=repro_steps,
+        actual_result=actual,
+        expected_result=expected,
+        environment=env,
+        evidence_files=packaged_evidence,
+        root_cause_hypothesis=hypothesis,
+    )
+    (ticket_dir / "ticket.md").write_text(md, encoding="utf-8")
+
+    ticket_data = {
+        "title": title,
+        "summary": summary,
+        "repro_steps": repro_steps,
+        "actual_result": actual,
+        "expected_result": expected,
+        "environment": env,
+        "evidence_files": packaged_evidence,
+        "root_cause_hypothesis": hypothesis,
+        "timestamp": timestamp,
+    }
+    (ticket_dir / "ticket.json").write_text(
+        json.dumps(ticket_data, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+
+    result = {
+        "ticket_dir": str(ticket_dir),
+        "ticket_md": str(ticket_dir / "ticket.md"),
+        "ticket_json": str(ticket_dir / "ticket.json"),
+    }
+    click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+
+
 @tickets.command("list-pending")
 def tickets_list_pending():
     """List untriaged tickets (not yet in fix/ or wontfix/)."""
