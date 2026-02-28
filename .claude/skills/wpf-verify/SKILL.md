@@ -45,50 +45,15 @@ wpf-agent verify --exe <path/to/App.exe> --spec verify-spec.yaml
 
 ### 5. チケット作成（必須）
 
-検証結果に関わらず、**必ず**チケットを作成する。
+検証結果に関わらず、**必ず** `/wpf-ticket-create` スキルを呼び出してチケットを作成する。
 
-```bash
-python -c "
-import json, pathlib, time
-from wpf_agent.tickets.templates import render_ticket_md, default_environment
+呼び出し例:
+```
+/wpf-ticket-create 検証完了 — 全チェック合格。exe: bin/Debug/net9.0-windows/MyApp.exe。起動OK、UI応答OK、エラーダイアログなし。
+```
 
-env = default_environment()
-env['Exe'] = '<exe_path>'
-
-md = render_ticket_md(
-    title='<タイトル>',
-    summary='<概要>',
-    repro_steps=[
-        'wpf-agent verify --exe <path>',
-    ],
-    actual_result='<実際の結果>',
-    expected_result='<期待される結果>',
-    environment=env,
-    evidence_files=['<スクリーンショットパス>'],
-    root_cause_hypothesis='<原因の仮説 (あれば)>',
-)
-
-ts = time.strftime('%Y%m%d-%H%M%S')
-ticket_dir = pathlib.Path('artifacts/tickets') / f'TICKET-{ts}'
-ticket_dir.mkdir(parents=True, exist_ok=True)
-(ticket_dir / 'ticket.md').write_text(md, encoding='utf-8')
-
-ticket_data = {
-    'title': '<タイトル>',
-    'summary': '<概要>',
-    'status': '<PASS or FAIL>',
-    'repro_steps': ['wpf-agent verify --exe <path>'],
-    'actual_result': '<実際の結果>',
-    'expected_result': '<期待される結果>',
-    'environment': env,
-    'timestamp': ts,
-}
-(ticket_dir / 'ticket.json').write_text(
-    json.dumps(ticket_data, indent=2, ensure_ascii=False), encoding='utf-8'
-)
-print(f'Ticket created: {ticket_dir}')
-print(md)
-"
+```
+/wpf-ticket-create 起動後にUIが応答しない。wpf-agent verify --exe bin/Debug/net9.0-windows/MyApp.exe で responsive チェックが FAIL。
 ```
 
 #### チケットタイトルのルール

@@ -69,72 +69,26 @@ wpf-agent ui state --pid <pid> --aid <automation_id>
 
 ### 4. チケット作成（必須）
 
-探索が完了したら（中断された場合も含め）、**必ず**チケットを作成する。
+探索が完了したら（中断された場合も含め）、**必ず** `/wpf-ticket-create` スキルを呼び出してチケットを作成する。
 問題が見つからなかった場合も「問題なし」のチケットを作成する。
 
-```bash
-# タイムスタンプ付きディレクトリを作成
-python -c "
-import json, pathlib, time
-from wpf_agent.tickets.templates import render_ticket_md, default_environment
+呼び出し例:
+```
+/wpf-ticket-create UI探索テスト完了。探索した要素: MainButton, InputField, OptionCheck。結果: 全操作正常、問題なし。
+```
 
-env = default_environment()
-env['Target PID'] = '<pid>'
-env['Target Process'] = '<process>'
-
-md = render_ticket_md(
-    title='<タイトル>',
-    summary='<概要>',
-    repro_steps=[
-        '<ステップ1: wpf-agent ui ... コマンド>',
-        '<ステップ2: wpf-agent ui ... コマンド>',
-    ],
-    actual_result='<実際の結果>',
-    expected_result='<期待される結果>',
-    environment=env,
-    evidence_files=['<スクリーンショットパス>'],
-    root_cause_hypothesis='<原因の仮説 (あれば)>',
-)
-
-ts = time.strftime('%Y%m%d-%H%M%S')
-ticket_dir = pathlib.Path('artifacts/tickets') / f'TICKET-{ts}'
-ticket_dir.mkdir(parents=True, exist_ok=True)
-
-(ticket_dir / 'ticket.md').write_text(md, encoding='utf-8')
-
-ticket_data = {
-    'title': '<タイトル>',
-    'summary': '<概要>',
-    'status': '<PASS or FAIL>',
-    'repro_steps': ['<ステップ>'],
-    'actual_result': '<実際の結果>',
-    'expected_result': '<期待される結果>',
-    'environment': env,
-    'timestamp': ts,
-}
-(ticket_dir / 'ticket.json').write_text(
-    json.dumps(ticket_data, indent=2, ensure_ascii=False), encoding='utf-8'
-)
-print(f'Ticket created: {ticket_dir}')
-print(md)
-"
+```
+/wpf-ticket-create ボタンクリック後にステータスラベルが更新されない。MainButton をクリックしたが StatusLabel が "Ready" のまま変化しなかった。
 ```
 
 #### チケットタイトルのルール
 - **問題あり**: 具体的な問題を記述 (例: `ボタンクリック後にステータスが更新されない`)
 - **問題なし**: `UI探索テスト完了 — 問題なし (<アプリ名>)` の形式
 
-#### エビデンスのコピー
-```bash
-mkdir -p <ticket_dir>/screens
-cp artifacts/sessions/explore_step_*.png <ticket_dir>/screens/
-```
-
 ### 5. ユーザーへの報告
 
-以下を必ず表示する:
+チケット作成後、以下を表示する:
 - チケットのパス
-- ticket.md の内容
 - 探索したUI要素の一覧
 - 実行した操作のサマリ
 - 発見した問題（あれば）
