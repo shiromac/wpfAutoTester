@@ -1,0 +1,39 @@
+id: demo-a-settings
+title: "Demo A: Open settings, input text, save"
+tags: [demo, settings, smoke]
+owner: wpf-agent
+profile: example
+
+steps:
+  - action: focus_window
+    selector: {}
+    args: {}
+
+  - action: click
+    selector:
+      automation_id: SettingsButton
+    args: {}
+    expected:
+      - type: exists
+        selector:
+          automation_id: SettingsPanel
+
+  - action: type_text
+    selector:
+      automation_id: ServerUrlTextBox
+    args:
+      text: "http://localhost:1234"
+    expected:
+      - type: text_equals
+        selector:
+          automation_id: ServerUrlTextBox
+        value: "http://localhost:1234"
+
+  - action: click
+    selector:
+      automation_id: SaveButton
+    args: {}
+    expected:
+      - type: exists
+        selector:
+          automation_id: SavedIndicator

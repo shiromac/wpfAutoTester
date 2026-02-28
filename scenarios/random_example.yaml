@@ -1,0 +1,68 @@
+# ランダムテスト設定ファイルの例
+#
+# 実行方法:
+#   wpf-agent random run --config scenarios/random_example.yaml --profile MyApp
+#   wpf-agent random run --profile MyApp --max-steps 100 --seed 42  # CLI直接指定も可
+
+# 対象プロファイル（profiles.json から）
+profile: MyApp-Dev
+
+# 乱数シード（省略時は自動生成・記録される）
+# seed: 42
+
+# 最大ステップ数
+max_steps: 200
+
+# ステップ間の待機時間（ミリ秒）
+step_delay_ms: 500
+
+# オラクル実行間隔（N ステップごと）
+oracle_interval: 5
+
+# アクション空間: 重み付きでランダム選択される操作の定義
+action_space:
+  actions:
+    - action: click
+      weight: 5          # 重みが大きいほど選ばれやすい
+
+    - action: type_text
+      weight: 2
+      texts:             # 入力されるテキストの候補
+        - "test"
+        - "hello world"
+        - "123"
+        - ""
+        - "日本語テスト"
+        - "very long text that might cause issues in some fields"
+
+    - action: toggle
+      weight: 1
+
+    - action: select_combo
+      weight: 1
+
+# 不変条件（invariants）: 各オラクルチェック時に検証される
+# 「常にこの要素が存在しているべき」等の条件を定義
+invariants:
+  - selector:
+      automation_id: MainWindow
+    description: "メインウィンドウは常に存在すべき"
+
+  - selector:
+      automation_id: StatusBar
+    description: "ステータスバーは常に表示されているべき"
+
+# 安全設定（profiles.json の safety を上書き可能）
+safety:
+  allow_destructive: false
+  destructive_patterns:
+    - delete
+    - remove
+    - drop
+    - exit
+    - quit
+    - close
+    - shutdown
+    - format
+    - reset
+  require_double_confirm: true

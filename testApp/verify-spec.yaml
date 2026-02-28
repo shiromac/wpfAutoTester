@@ -1,0 +1,53 @@
+app:
+  exe: "testApp/bin/Debug/net9.0-windows/TestApp.exe"
+  title_re: "TestApp.*"
+  startup_wait_ms: 3000
+
+expected_controls:
+  - selector: {automation_id: "TitleLabel"}
+    expect: {exists: true}
+  - selector: {automation_id: "StatusLabel"}
+    expect: {exists: true, text: "Ready"}
+  - selector: {automation_id: "MainButton"}
+    expect: {exists: true, enabled: true}
+  - selector: {automation_id: "ResetButton"}
+    expect: {exists: true, enabled: true}
+  - selector: {automation_id: "InputField"}
+    expect: {exists: true, enabled: true}
+  - selector: {automation_id: "OptionCheck"}
+    expect: {exists: true}
+
+interactions:
+  - name: "ボタンクリックでステータス変更"
+    action: click
+    selector: {automation_id: "MainButton"}
+    after:
+      - selector: {automation_id: "StatusLabel"}
+        expect: {text: "Clicked"}
+      - selector: {automation_id: "CounterLabel"}
+        expect: {text: "Clicks: 1"}
+
+  - name: "テキスト入力"
+    action: type_text
+    selector: {automation_id: "InputField"}
+    text: "hello world"
+    after:
+      - selector: {automation_id: "InputField"}
+        expect: {text: "hello world"}
+
+  - name: "チェックボックスON"
+    action: toggle
+    selector: {automation_id: "OptionCheck"}
+    state: true
+    after:
+      - selector: {automation_id: "StatusLabel"}
+        expect: {text: "Option enabled"}
+
+  - name: "リセットで初期状態に戻る"
+    action: click
+    selector: {automation_id: "ResetButton"}
+    after:
+      - selector: {automation_id: "StatusLabel"}
+        expect: {text: "Ready"}
+      - selector: {automation_id: "CounterLabel"}
+        expect: {text: "Clicks: 0"}

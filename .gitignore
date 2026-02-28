@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+artifacts/
+*.exe
+.env
+testApp/bin/
+testApp/obj/
+.claude/settings.local.json

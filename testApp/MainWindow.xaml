@@ -1,0 +1,79 @@
+<Window x:Class="TestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TestApp - WPF Debug Sample"
+        Width="480" Height="400"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="WPF Debug Test App"
+                   FontSize="20" FontWeight="Bold"
+                   AutomationProperties.AutomationId="TitleLabel"/>
+
+        <!-- Status label -->
+        <TextBlock Grid.Row="2"
+                   x:Name="StatusLabel"
+                   Text="Ready"
+                   FontSize="14"
+                   Foreground="Gray"
+                   AutomationProperties.AutomationId="StatusLabel"/>
+
+        <!-- Button row -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button x:Name="MainButton"
+                    Content="Click Me"
+                    Width="120" Height="36"
+                    Click="MainButton_Click"
+                    AutomationProperties.AutomationId="MainButton"/>
+            <Button x:Name="ResetButton"
+                    Content="Reset"
+                    Width="120" Height="36"
+                    Margin="12,0,0,0"
+                    Click="ResetButton_Click"
+                    AutomationProperties.AutomationId="ResetButton"/>
+        </StackPanel>
+
+        <!-- Text input -->
+        <DockPanel Grid.Row="6">
+            <TextBlock Text="Input:" VerticalAlignment="Center" Width="50"/>
+            <TextBox x:Name="InputField"
+                     Height="30"
+                     VerticalContentAlignment="Center"
+                     AutomationProperties.AutomationId="InputField"/>
+        </DockPanel>
+
+        <!-- Checkbox -->
+        <CheckBox Grid.Row="8"
+                  x:Name="OptionCheck"
+                  Content="Enable option"
+                  IsChecked="False"
+                  Checked="OptionCheck_Changed"
+                  Unchecked="OptionCheck_Changed"
+                  AutomationProperties.AutomationId="OptionCheck"/>
+
+        <!-- Counter at bottom -->
+        <TextBlock Grid.Row="10"
+                   x:Name="CounterLabel"
+                   Text="Clicks: 0"
+                   FontSize="12"
+                   Foreground="DimGray"
+                   HorizontalAlignment="Right"
+                   AutomationProperties.AutomationId="CounterLabel"/>
+    </Grid>
+</Window>

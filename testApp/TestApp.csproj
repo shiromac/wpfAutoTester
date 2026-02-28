@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon />
+    <AssemblyName>TestApp</AssemblyName>
+    <RootNamespace>TestApp</RootNamespace>
+  </PropertyGroup>
+
+</Project>
