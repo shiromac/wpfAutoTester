@@ -181,6 +181,222 @@ def launch(exe, args):
     click.echo(f"Launched: {target} (target_id={tid})")
 
 
+# ── ui ────────────────────────────────────────────────────────────
+
+
+def _resolve_ui_target(pid, title_re):
+    """Resolve a target from --pid or --title-re CLI options."""
+    from wpf_agent.core.target import TargetRegistry
+
+    if not pid and not title_re:
+        click.echo("Specify --pid or --title-re", err=True)
+        sys.exit(1)
+
+    registry = TargetRegistry.get_instance()
+    spec = {}
+    if pid:
+        spec["pid"] = pid
+    elif title_re:
+        spec["title_re"] = title_re
+    _, target = registry.resolve(spec)
+    return target
+
+
+def _build_selector(aid, name, control_type):
+    """Build a Selector from --aid, --name, --control-type CLI options."""
+    from wpf_agent.uia.selector import Selector
+
+    if not aid and not name and not control_type:
+        click.echo("Specify at least --aid, --name, or --control-type", err=True)
+        sys.exit(1)
+
+    return Selector(automation_id=aid, name=name, control_type=control_type)
+
+
+@main.group("ui")
+@click.option("--no-guard", is_flag=True, default=False, help="Skip mouse-movement guard check")
+@click.pass_context
+def ui_cmd(ctx, no_guard):
+    """Direct UI operations (for Claude Code to drive the UI loop)."""
+    ctx.ensure_object(dict)
+    ctx.obj["no_guard"] = no_guard
+
+
+def _run_guard(ctx, command_name: str) -> None:
+    """Run guard check; on interrupt, print JSON and exit with code 2."""
+    if ctx.obj.get("no_guard"):
+        return
+    from wpf_agent.core.errors import UserInterruptError
+    from wpf_agent.ui_guard import check_guard
+
+    try:
+        check_guard(command_name)
+    except UserInterruptError as exc:
+        result = {
+            "interrupted": True,
+            "reason": exc.reason,
+            "detail": exc.detail,
+            "command": command_name,
+            "action": "Run 'wpf-agent ui resume' to continue.",
+        }
+        click.echo(json.dumps(result, ensure_ascii=False))
+        sys.exit(2)
+
+
+@ui_cmd.command("screenshot")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--save", "save_path", default=None, help="Save path for screenshot PNG")
+def ui_screenshot(pid, title_re, save_path):
+    """Capture a screenshot of the target window."""
+    from wpf_agent.uia.screenshot import capture_screenshot
+
+    target = _resolve_ui_target(pid, title_re)
+    dest = pathlib.Path(save_path) if save_path else None
+    result_path = capture_screenshot(target=target, save_path=dest)
+    click.echo(str(result_path))
+
+
+@ui_cmd.command("controls")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--depth", default=4, type=int, help="Traversal depth")
+def ui_controls(pid, title_re, depth):
+    """List UI controls as JSON."""
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    controls = UIAEngine.list_controls(target, depth=depth)
+    click.echo(json.dumps(controls, ensure_ascii=False, indent=2))
+
+
+@ui_cmd.command("focus")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.pass_context
+def ui_focus(ctx, pid, title_re):
+    """Focus the target window."""
+    _run_guard(ctx, "focus")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    result = UIAEngine.focus_window(target)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("click")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID")
+@click.option("--name", default=None, help="Element name")
+@click.option("--control-type", default=None, help="Control type")
+@click.pass_context
+def ui_click(ctx, pid, title_re, aid, name, control_type):
+    """Click a UI element."""
+    _run_guard(ctx, "click")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type)
+    result = UIAEngine.click(target, selector)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("type")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID")
+@click.option("--name", default=None, help="Element name")
+@click.option("--control-type", default=None, help="Control type")
+@click.option("--text", required=True, help="Text to type")
+@click.option("--clear/--no-clear", default=True, help="Clear field before typing")
+@click.pass_context
+def ui_type(ctx, pid, title_re, aid, name, control_type, text, clear):
+    """Type text into a UI element."""
+    _run_guard(ctx, "type")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type)
+    result = UIAEngine.type_text(target, selector, text, clear=clear)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("toggle")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID")
+@click.option("--name", default=None, help="Element name")
+@click.option("--control-type", default=None, help="Control type")
+@click.option("--state", default=None, type=bool, help="Target state (true/false)")
+@click.pass_context
+def ui_toggle(ctx, pid, title_re, aid, name, control_type, state):
+    """Toggle a checkbox or toggle button."""
+    _run_guard(ctx, "toggle")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type)
+    result = UIAEngine.toggle(target, selector, state=state)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("read")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID")
+@click.option("--name", default=None, help="Element name")
+@click.option("--control-type", default=None, help="Control type")
+def ui_read(pid, title_re, aid, name, control_type):
+    """Read text from a UI element."""
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type)
+    result = UIAEngine.read_text(target, selector)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("state")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID")
+@click.option("--name", default=None, help="Element name")
+@click.option("--control-type", default=None, help="Control type")
+def ui_state(pid, title_re, aid, name, control_type):
+    """Get state of a UI element (enabled, visible, value, etc.)."""
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type)
+    result = UIAEngine.get_state(target, selector)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("resume")
+def ui_resume():
+    """Clear the pause state so UI commands can run again."""
+    from wpf_agent.ui_guard import clear_pause, get_pause_info
+
+    info = get_pause_info()
+    existed = clear_pause()
+    result = {"resumed": existed, "previous_pause": info}
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("status")
+def ui_status():
+    """Show current guard state (active or paused)."""
+    from wpf_agent.ui_guard import get_pause_info, is_paused
+
+    if is_paused():
+        info = get_pause_info() or {}
+        result = {"state": "paused", **info}
+    else:
+        result = {"state": "active"}
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
 # ── scenario ──────────────────────────────────────────────────────
 
 @main.group()
@@ -298,6 +514,144 @@ def random_run(profile, config_file, max_steps, seed):
             profile_name=profile,
         )
         click.echo(f"Ticket generated: {ticket_dir}")
+
+
+# ── explore ───────────────────────────────────────────────────────
+
+@main.group("explore")
+def explore_cmd():
+    """AI-guided exploratory test commands."""
+    pass
+
+
+@explore_cmd.command("run")
+@click.option("--profile", default=None, help="Profile name")
+@click.option("--goal", default="", help="Exploration goal (e.g. '全画面を探索してクラッシュを探す')")
+@click.option("--config", "config_file", default=None, help="Path to explore config YAML")
+@click.option("--max-steps", default=None, type=int, help="Maximum exploration steps (overrides config)")
+@click.option("--model", default=None, help="Claude model to use (overrides config)")
+def explore_run(profile, goal, config_file, max_steps, model):
+    """Run AI-guided exploratory testing.
+
+    Uses Claude Vision to analyze screenshots and decide actions.
+    Requires ANTHROPIC_API_KEY environment variable.
+    """
+    from wpf_agent.config import ProfileStore
+    from wpf_agent.core.session import Session
+    from wpf_agent.core.target import TargetRegistry
+    from wpf_agent.testing.explorer import ExploreConfig, run_explore_test
+    from wpf_agent.tickets.generator import generate_ticket_from_explore
+
+    # Load config from YAML or use defaults
+    if config_file:
+        config = ExploreConfig.from_file(pathlib.Path(config_file))
+    else:
+        config = ExploreConfig()
+
+    # CLI overrides
+    if max_steps is not None:
+        config.max_steps = max_steps
+    if goal:
+        config.goal = goal
+    if model:
+        config.model = model
+
+    # Resolve profile: CLI > config file > error
+    profile_name = profile or config.profile
+    if not profile_name:
+        click.echo("Specify --profile or set profile in config YAML", err=True)
+        sys.exit(1)
+
+    store = ProfileStore()
+    prof = store.get(profile_name)
+    if prof is None:
+        click.echo(f"Profile '{profile_name}' not found", err=True)
+        sys.exit(1)
+
+    # Use profile safety if config file didn't override
+    if not config_file:
+        config.safety = prof.safety
+
+    registry = TargetRegistry.get_instance()
+    _, target = registry.resolve_profile(prof)
+    session = Session()
+    click.echo(f"Starting AI-guided exploration (model={config.model}, max_steps={config.max_steps})...")
+    if config.goal:
+        click.echo(f"Goal: {config.goal}")
+
+    result = run_explore_test(target, config, session=session)
+
+    click.echo(f"Completed: {result.steps_run} steps")
+    if result.passed:
+        click.echo("PASSED — no failures detected")
+    else:
+        click.echo(f"FAILED — {len(result.failures)} failure(s)")
+        for f in result.failures:
+            click.echo(f"  - Step {f.get('step')}: {f.get('oracle', f.get('error', ''))}")
+
+        ticket_dir = generate_ticket_from_explore(
+            session=session,
+            target=target,
+            failures=result.failures,
+            goal=config.goal,
+            profile_name=profile_name,
+        )
+        click.echo(f"Ticket generated: {ticket_dir}")
+
+
+# ── verify ────────────────────────────────────────────────────────
+
+@main.command()
+@click.option("--exe", required=True, help="Path to app executable")
+@click.option("--args", "app_args", default="", help="App arguments (space-separated)")
+@click.option("--title-re", default=None, help="Window title regex for detection")
+@click.option("--spec", default=None, help="Path to verification spec YAML")
+@click.option("--timeout", default=5000, type=int, help="Startup wait ms")
+@click.option("--no-close", is_flag=True, help="Don't close app after verification")
+def verify(exe, app_args, title_re, spec, timeout, no_close):
+    """Verify a built app: launch, smoke-test, check elements, and report."""
+    from wpf_agent.core.session import Session
+    from wpf_agent.testing.verifier import VerifyConfig, run_verify
+
+    if spec:
+        config = VerifyConfig.from_file(pathlib.Path(spec))
+        # CLI overrides
+        if exe:
+            config.exe = exe
+        if title_re:
+            config.title_re = title_re
+    else:
+        config = VerifyConfig(exe=exe, title_re=title_re or "")
+
+    if app_args:
+        config.args = app_args.split()
+    config.startup_wait_ms = timeout
+    if no_close:
+        config.auto_close = False
+
+    session = Session()
+    click.echo(f"Verifying: {config.exe}")
+    click.echo(f"Session: {session.session_id}")
+
+    result = run_verify(config, session=session)
+
+    # Display results
+    for c in result.checks:
+        status = click.style("PASS", fg="green") if c.passed else click.style("FAIL", fg="red")
+        click.echo(f"  [{status}] {c.name}: {c.message}")
+
+    click.echo()
+    if result.passed:
+        click.echo(click.style("VERIFICATION PASSED", fg="green", bold=True))
+    else:
+        click.echo(click.style("VERIFICATION FAILED", fg="red", bold=True))
+        failed = [c for c in result.checks if not c.passed]
+        click.echo(f"  {len(failed)} check(s) failed")
+
+    click.echo(f"\nSession: {result.session_id}")
+    click.echo(f"Controls found: {result.controls_found}")
+    if result.screenshot_path:
+        click.echo(f"Screenshot: {result.screenshot_path}")
 
 
 # ── replay ────────────────────────────────────────────────────────

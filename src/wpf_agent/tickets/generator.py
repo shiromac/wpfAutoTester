@@ -184,6 +184,47 @@ def generate_ticket_from_random(
     )
 
 
+def generate_ticket_from_explore(
+    session: Session,
+    target: ResolvedTarget | None,
+    failures: list[dict[str, Any]],
+    goal: str = "",
+    profile_name: str = "",
+) -> pathlib.Path:
+    """Generate a ticket from AI-guided explore test failures."""
+    first = failures[0] if failures else {}
+
+    repro_steps = [f"Run AI-guided explore test"]
+    if goal:
+        repro_steps.append(f"Goal: {goal}")
+    from wpf_agent.runner.logging import StepLogger
+    logger = StepLogger(session)
+    for entry in logger.read_last_n(30):
+        repro_steps.append(
+            f"[Step {entry.get('step')}] {entry.get('action')}: {entry.get('args', {})}"
+        )
+
+    actual_parts = []
+    for f in failures:
+        if "oracle" in f:
+            actual_parts.append(f"Oracle: {f['oracle']}")
+        if "error" in f:
+            actual_parts.append(f"Error: {f.get('error', '')}")
+
+    return generate_ticket(
+        session=session,
+        target=target,
+        title=f"AI explore test failure (step={first.get('step', '?')})",
+        summary=f"AI-guided exploratory test detected {len(failures)} failure(s).",
+        repro_steps=repro_steps,
+        actual_result="\n".join(actual_parts),
+        expected_result="Application should remain stable during AI-guided exploratory testing.",
+        failure_step=first.get("step"),
+        root_cause_hypothesis=_guess_root_cause(failures),
+        profile_name=profile_name,
+    )
+
+
 def _guess_root_cause(failures: list[dict[str, Any]]) -> str:
     """Best-effort root cause hypothesis based on failure data."""
     if not failures:

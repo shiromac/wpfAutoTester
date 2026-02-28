@@ -12,7 +12,41 @@
     "safety": {
       "allow_destructive": false,
       "destructive_patterns": [
-        "delete", "remove", "drop", "exit", "quit", "close", "shutdown"
+        "delete",
+        "remove",
+        "drop",
+        "exit",
+        "quit",
+        "close",
+        "shutdown"
+      ],
+      "require_double_confirm": true
+    }
+  },
+  {
+    "name": "testapp",
+    "match": {
+      "title_re": "TestApp.*"
+    },
+    "launch": {
+      "exe": "testApp/bin/Debug/net9.0-windows/TestApp.exe",
+      "args": []
+    },
+    "timeouts": {
+      "startup_ms": 15000,
+      "default_ms": 10000,
+      "screenshot_ms": 5000
+    },
+    "safety": {
+      "allow_destructive": false,
+      "destructive_patterns": [
+        "delete",
+        "remove",
+        "drop",
+        "exit",
+        "quit",
+        "close",
+        "shutdown"
       ],
       "require_double_confirm": true
     }

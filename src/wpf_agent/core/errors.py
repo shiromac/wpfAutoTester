@@ -31,3 +31,12 @@ class ScenarioError(WpfAgentError):
 
 class ReplayError(WpfAgentError):
     """Replay execution error."""
+
+
+class UserInterruptError(WpfAgentError):
+    """User interrupted the operation via mouse movement or pause state."""
+
+    def __init__(self, reason: str, detail: str = ""):
+        self.reason = reason
+        self.detail = detail
+        super().__init__(f"User interrupt: {reason}. {detail}")

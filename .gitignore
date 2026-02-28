@@ -8,3 +8,5 @@ build/
 artifacts/
 *.exe
 .env
+testApp/bin/
+testApp/obj/
