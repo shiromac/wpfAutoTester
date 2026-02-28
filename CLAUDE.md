@@ -53,6 +53,8 @@ wpf-agent verify --exe <path>            # ビルド後自動検証
 wpf-agent verify --exe <path> --spec <yaml>  # spec付き検証
 wpf-agent replay --file <json>           # リプレイ
 wpf-agent tickets open --last            # チケット確認
+wpf-agent tickets list-pending           # 未分類チケット一覧
+wpf-agent tickets triage --ticket <path> --decision <fix|wontfix> [--reason "..."]
 ```
 
 ### `wpf-agent ui` — Claude Code 直接 UI 操作
@@ -103,6 +105,7 @@ wpf-agent ui --no-guard click --pid ...   # ガードをスキップして実行
 - `/wpf-replay` — AI不要リプレイ再現
 - `/wpf-ticket` — チケット確認・分析
 - `/wpf-ticket-create` — 問題チケット作成 (ticket.md + エビデンス収集)
+- `/wpf-ticket-triage` — チケット整理 (fix / wontfix に分類・移動)
 
 ## ディレクトリ構成
 ```

@@ -799,3 +799,101 @@ def tickets_open(last, session_id):
         return
 
     click.echo(ticket_path.read_text(encoding="utf-8"))
+
+
+@tickets.command("list-pending")
+def tickets_list_pending():
+    """List untriaged tickets (not yet in fix/ or wontfix/)."""
+    from wpf_agent.constants import TICKET_DIR
+
+    ticket_base = pathlib.Path(TICKET_DIR)
+    if not ticket_base.exists():
+        click.echo(json.dumps([], ensure_ascii=False))
+        return
+
+    # Directories that contain triaged tickets
+    triaged_roots = {ticket_base / "fix", ticket_base / "wontfix"}
+
+    pending = []
+    for ticket_json in sorted(ticket_base.rglob("ticket.json")):
+        # Skip tickets already under fix/ or wontfix/
+        if any(ticket_json.is_relative_to(r) for r in triaged_roots if r.exists()):
+            continue
+
+        # Skip tickets that already have a triage decision in their JSON
+        try:
+            data = json.loads(ticket_json.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+
+        if data.get("triage"):
+            continue
+
+        pending.append({
+            "path": str(ticket_json.parent),
+            "title": data.get("title", ""),
+            "summary": data.get("summary", ""),
+            "timestamp": data.get("timestamp", ""),
+        })
+
+    click.echo(json.dumps(pending, ensure_ascii=False, indent=2))
+
+
+@tickets.command("triage")
+@click.option("--ticket", required=True, help="Path to ticket directory")
+@click.option(
+    "--decision",
+    required=True,
+    type=click.Choice(["fix", "wontfix"], case_sensitive=False),
+    help="Triage decision",
+)
+@click.option("--reason", default="", help="Reason for the decision")
+def tickets_triage(ticket, decision, reason):
+    """Triage a ticket: add decision and move to fix/ or wontfix/."""
+    import shutil
+    import time
+
+    from wpf_agent.constants import TICKET_DIR
+
+    ticket_dir = pathlib.Path(ticket)
+    ticket_json_path = ticket_dir / "ticket.json"
+
+    if not ticket_json_path.exists():
+        click.echo(f"ticket.json not found in {ticket_dir}", err=True)
+        sys.exit(1)
+
+    # Update ticket.json with triage info
+    try:
+        data = json.loads(ticket_json_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        click.echo(f"Failed to read ticket.json: {exc}", err=True)
+        sys.exit(1)
+
+    data["triage"] = {
+        "decision": decision,
+        "reason": reason,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    ticket_json_path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+
+    # Move ticket directory to fix/ or wontfix/
+    dest_parent = pathlib.Path(TICKET_DIR) / decision
+    dest_parent.mkdir(parents=True, exist_ok=True)
+    dest = dest_parent / ticket_dir.name
+
+    try:
+        shutil.move(str(ticket_dir), str(dest))
+    except (OSError, shutil.Error) as exc:
+        click.echo(f"Failed to move ticket: {exc}", err=True)
+        sys.exit(1)
+
+    result = {
+        "ticket": ticket_dir.name,
+        "decision": decision,
+        "reason": reason,
+        "moved_to": str(dest),
+    }
+    click.echo(json.dumps(result, ensure_ascii=False, indent=2))
