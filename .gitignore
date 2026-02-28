@@ -1,0 +1,32 @@
+# wpfautotester Python package
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.tox/
+.venv/
+venv/
+env/
+.env/
+
+# Test / coverage artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.lcov
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Artifacts directory created by doctor
+artifacts/
