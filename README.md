@@ -113,6 +113,28 @@ wpf-agent replay --file artifacts/sessions/<id>/actions.json --profile MyApp
 wpf-agent tickets open --last
 ```
 
+### Ticket Triage
+
+Classify untriaged tickets as `fix` or `wontfix`:
+
+```bash
+# List untriaged tickets
+wpf-agent tickets list-pending
+
+# Move to fix/
+wpf-agent tickets triage --ticket artifacts/tickets/<session>/<TICKET-xxx> --decision fix --reason "Crash detected"
+
+# Move to wontfix/
+wpf-agent tickets triage --ticket artifacts/tickets/<session>/<TICKET-xxx> --decision wontfix --reason "Expected behavior"
+```
+
+Or use the slash command for AI-assisted triage:
+
+```
+/wpf-ticket-triage auto
+/wpf-ticket-triage manual
+```
+
 ## `wpf-agent ui` — Direct UI Commands
 
 CLI commands for Claude Code to operate UI directly via Bash. No ANTHROPIC_API_KEY required.
@@ -198,6 +220,7 @@ wpf-agent install-skills --github
 | `/wpf-replay` | AI-free replay |
 | `/wpf-ticket` | View/analyze tickets |
 | `/wpf-ticket-create` | Create issue ticket with evidence |
+| `/wpf-ticket-triage` | Triage tickets (classify as fix/wontfix) |
 
 ## Profile Configuration
 
@@ -237,6 +260,34 @@ testApp/      # Sample WPF app (.NET 9) for testing
 pip install pyinstaller
 pyinstaller wpf_agent.spec
 ```
+
+## Claude Code Permission Settings
+
+When Claude Code runs complex piped commands (e.g., `wpf-agent ui controls | python -c "..." | head`), it may prompt for permission each time. To auto-approve these, configure `.claude/settings.local.json` (project-local, gitignored):
+
+```jsonc
+{
+  "permissions": {
+    "allow": [
+      "Bash(wpf-agent *)",   // Matches the full command string including pipes
+      "Bash(wpf-agent:*)",   // Matches by command name prefix (no pipes)
+      "Bash(python:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}
+```
+
+**Pattern syntax:**
+
+| Pattern | Matches | Notes |
+|---------|---------|-------|
+| `Bash(wpf-agent:*)` | Command **name** starts with `wpf-agent` | Does not match piped commands |
+| `Bash(wpf-agent *)` | Full command **string** starts with `wpf-agent ` | Matches pipes: `wpf-agent ... \| python ...` |
+
+For piped commands like `wpf-agent ui controls --pid 1234 | python -c "..." | head -30`, you need `Bash(wpf-agent *)` (space separator) because the entire command string is matched against the pattern.
+
+Use `/permissions` in Claude Code to inspect active rules.
 
 ## License
 

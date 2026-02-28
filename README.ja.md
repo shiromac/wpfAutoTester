@@ -120,6 +120,28 @@ wpf-agent tickets open --last
 wpf-agent tickets open
 ```
 
+### チケット整理
+
+未分類チケットを `fix`（修正対象）/ `wontfix`（修正しない）に分類:
+
+```bash
+# 未分類チケット一覧
+wpf-agent tickets list-pending
+
+# fix/ に移動
+wpf-agent tickets triage --ticket artifacts/tickets/<session>/<TICKET-xxx> --decision fix --reason "クラッシュ検出"
+
+# wontfix/ に移動
+wpf-agent tickets triage --ticket artifacts/tickets/<session>/<TICKET-xxx> --decision wontfix --reason "仕様通りの動作"
+```
+
+スラッシュコマンドで AI 支援の整理も可能:
+
+```
+/wpf-ticket-triage auto
+/wpf-ticket-triage manual
+```
+
 ## `wpf-agent ui` — 直接 UI 操作コマンド
 
 Claude Code が Bash 経由で直接 UI を操作するコマンド群。ANTHROPIC_API_KEY 不要。
@@ -205,6 +227,7 @@ wpf-agent install-skills --github
 | `/wpf-replay` | AI 不要リプレイ |
 | `/wpf-ticket` | チケット確認・分析 |
 | `/wpf-ticket-create` | 問題チケット作成 (エビデンス収集付き) |
+| `/wpf-ticket-triage` | チケット整理 (fix / wontfix に分類・移動) |
 
 ## プロファイル設定
 
@@ -296,6 +319,34 @@ pyinstaller wpf_agent.spec
 - Windows 10 / 11
 - Python 3.10 以上
 - 対象アプリ: WPF（UIA 対応であれば .NET バージョン問わず）
+
+## Claude Code パーミッション設定
+
+Claude Code がパイプ付きの複雑なコマンド（例: `wpf-agent ui controls | python -c "..." | head`）を実行する際、毎回許可を求められることがあります。自動承認するには `.claude/settings.local.json`（プロジェクトローカル、gitignore 対象）を設定します:
+
+```jsonc
+{
+  "permissions": {
+    "allow": [
+      "Bash(wpf-agent *)",   // コマンド文字列全体にマッチ（パイプ含む）
+      "Bash(wpf-agent:*)",   // コマンド名プレフィックスにマッチ（パイプなし）
+      "Bash(python:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}
+```
+
+**パターン構文の違い:**
+
+| パターン | マッチ対象 | 備考 |
+|---------|-----------|------|
+| `Bash(コマンド名:*)` | **コマンド名** のプレフィックス | パイプ付きコマンドにはマッチしない |
+| `Bash(コマンド名 *)` | **コマンド文字列全体** | パイプ含む: `wpf-agent ... \| python ...` にマッチ |
+
+`wpf-agent ui controls --pid 1234 | python -c "..." | head -30` のようなパイプ付きコマンドには、`Bash(wpf-agent *)` (スペース区切り) が必要です。コマンド文字列全体がパターンと照合されるためです。
+
+Claude Code 内で `/permissions` を実行すると、現在有効なルールを確認できます。
 
 ## ライセンス
 
