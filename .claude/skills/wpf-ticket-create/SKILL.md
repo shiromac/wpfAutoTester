@@ -1,6 +1,7 @@
 ---
 name: wpf-ticket-create
 description: 探索テストで発見した問題のチケットを作成（ticket.md + ticket.json + エビデンス）
+argument-hint: issue description
 ---
 
 探索テストやUI操作中に発見した問題のチケットを作成してください。

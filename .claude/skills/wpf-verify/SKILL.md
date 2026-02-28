@@ -1,6 +1,7 @@
 ---
 name: wpf-verify
 description: ビルド後の自動検証（起動→スモークテスト→UIチェック→スクショ→レポート）
+argument-hint: exe path
 ---
 
 WPF アプリをビルドして自動検証を実行してください。

@@ -1,6 +1,7 @@
 ---
 name: wpf-click
 description: UI要素をクリックしてスクリーンショットで結果を検証
+argument-hint: PID and automation ID
 ---
 
 WPF UI自動化エージェントを使ってUI要素をクリックしてください。

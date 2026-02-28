@@ -1,6 +1,7 @@
 ---
 name: wpf-explore
 description: AI誘導型探索テスト（Claude Codeが直接UIを見て操作・判断するループ）
+argument-hint: goal or app path
 ---
 
 WPF アプリの AI 誘導型探索テストを実行してください。

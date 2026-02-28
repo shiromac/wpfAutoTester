@@ -1,6 +1,7 @@
 ---
 name: wpf-random
 description: ランダム探索テストの実行（seed再現・チケット自動生成）
+argument-hint: profile name
 ---
 
 WPF UI自動化エージェントでランダム（探索）テストを実行してください。

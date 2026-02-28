@@ -1,6 +1,7 @@
 ---
 name: wpf-type
 description: UI要素にテキストを入力して値を検証
+argument-hint: PID, automation ID, and text
 ---
 
 WPF UI自動化エージェントを使ってテキストを入力してください。

@@ -1,6 +1,7 @@
 ---
 name: wpf-ticket
 description: 生成されたチケットの確認・分析
+argument-hint: ticket ID or --last
 ---
 
 WPF UI自動化エージェントで生成されたチケットを確認・管理してください。

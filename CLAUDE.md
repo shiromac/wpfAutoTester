@@ -40,6 +40,8 @@ claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
 ## CLI コマンド
 ```
 wpf-agent init                           # 初期化
+wpf-agent install-skills                 # Claude Code スキルインストール
+wpf-agent install-skills --github        # .github/skills/ にもコピー (Copilot Coding Agent用)
 wpf-agent profiles list/add/edit/remove  # プロファイル管理
 wpf-agent run --profile <name>           # エージェントループ
 wpf-agent attach --pid <pid>             # PID接続

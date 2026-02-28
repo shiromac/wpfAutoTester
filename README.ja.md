@@ -1,49 +1,84 @@
 # WPF UI デバッグ自動化エージェント
 
-Claude Code と統合された WPF UI 自動化エージェントです。シナリオテスト、ランダム探索テスト、チケット自動生成、AI不要リプレイをサポートします。
+> **Windows 10/11 必須** | Python 3.10+
+
+Claude Code と統合された AI 駆動型 WPF UI テストエージェント。Claude がスクリーンショットを見て UI を理解し、自律的にアプリを探索・テストし、発見した問題を自動修正します。
+
+## 主な機能
+
+- **AI 誘導型探索** — Claude Code がスクリーンショットを見て操作を判断し、自律的にバグを発見 (`/wpf-explore`)
+- **自動修正ループ** — ビルド→検証→問題発見→コード修正→再ビルドを AI が自動実行 (`/wpf-verify`)
+- **シナリオテスト** — YAML 定義のテストシナリオ、アサーション、チケット自動生成
+- **ランダムテスト** — seed 再現可能なランダム探索、クラッシュ・異常検出
+- **AI 不要リプレイ** — 記録されたアクションを API 不要で再実行
+- **チケット自動生成** — スクリーンショット、UIA スナップショット、再現手順付きバグチケット
+- **UI 安全ガード** — マウス移動検知で自動化を一時停止
+
+## インストール
+
+```bash
+pip install git+https://github.com/shiro-mac/wpf-agent.git
+```
+
+開発用:
+
+```bash
+git clone https://github.com/shiro-mac/wpf-agent.git
+cd wpf-agent
+pip install -e .[dev]
+```
 
 ## クイックスタート
 
-```powershell
-# ワンコマンドセットアップ
-powershell -ExecutionPolicy Bypass -File setup.ps1
-```
-
-または手動で:
-
 ```bash
-pip install -e .[dev]
+# 初期化
 wpf-agent init
-```
 
-## MCP サーバー登録
+# Claude Code スキルをインストール (/wpf-explore, /wpf-verify 等)
+wpf-agent install-skills
 
-Claude Code に MCP サーバーを登録します:
-
-```bash
+# Claude Code に MCP サーバーを登録
 claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
-```
-
-または Claude Code の MCP 設定ファイルに直接追加:
-
-```json
-{
-  "mcpServers": {
-    "wpf-agent": {
-      "command": "python",
-      "args": ["-m", "wpf_agent", "mcp-serve"]
-    }
-  }
-}
 ```
 
 ## 使い方
 
-### プロファイルでアプリを指定
+### AI 誘導型探索（メイン機能）
 
-`profiles.json` に対象アプリの情報を設定してから実行します:
+Claude Code がアプリを直接操作してテスト — UI コマンドに ANTHROPIC_API_KEY は不要:
+
+```
+/wpf-explore 設定画面のボタンと入力欄をすべてテスト
+```
+
+探索ループ:
+1. スクリーンショットを撮影して確認
+2. UI コントロール一覧を取得 (automation ID, 名前, 種類)
+3. 視覚的な理解に基づいて次の操作を決定
+4. 操作を実行 (`click`, `type`, `toggle`)
+5. スクリーンショットで結果を検証
+6. 発見した問題を報告
+
+### ビルド＆自動検証
+
+ビルド後にアプリを自動検証:
 
 ```bash
+wpf-agent verify --exe bin/Debug/net9.0-windows/MyApp.exe
+```
+
+spec ファイルで詳細チェック:
+
+```bash
+wpf-agent verify --exe bin/Debug/net9.0-windows/MyApp.exe --spec verify-spec.yaml
+```
+
+検証失敗時、Claude Code がレポートを読み、コードを修正し、再ビルド・再検証します。
+
+### プロファイルでアプリを指定
+
+```bash
+# profiles.json に対象アプリの情報を設定してから実行:
 wpf-agent run --profile MyApp-Dev
 ```
 
@@ -59,23 +94,17 @@ wpf-agent launch --exe "C:/path/MyApp.exe" -- --dev-mode
 
 ### シナリオテスト
 
-YAML で定義されたテストシナリオを実行します。期待結果と異なる場合はチケットが自動生成されます。
-
 ```bash
 wpf-agent scenario run --file scenarios/demo_a_settings.yaml --profile MyApp
 ```
 
-### ランダム（探索）テスト
-
-seed ベースの決定的ランダムテストを実行します。クラッシュや UI 異常を検出するとチケットを生成します。
+### ランダムテスト
 
 ```bash
 wpf-agent random run --profile MyApp --max-steps 200 --seed 42
 ```
 
 ### リプレイ（AI 不要）
-
-記録されたアクションシーケンスを AI なしで再実行します:
 
 ```bash
 wpf-agent replay --file artifacts/sessions/<session-id>/actions.json --profile MyApp
@@ -91,9 +120,48 @@ wpf-agent tickets open --last
 wpf-agent tickets open
 ```
 
-## MCP ツール一覧（13個）
+## `wpf-agent ui` — 直接 UI 操作コマンド
 
-Claude Code から呼び出せるツールです:
+Claude Code が Bash 経由で直接 UI を操作するコマンド群。ANTHROPIC_API_KEY 不要。
+
+### 操作系コマンド（マウス移動検知ガード対象）
+
+```bash
+wpf-agent ui focus --pid <pid>                          # ウィンドウフォーカス
+wpf-agent ui click --pid <pid> --aid <id>               # クリック
+wpf-agent ui type --pid <pid> --aid <id> --text "..."   # テキスト入力
+wpf-agent ui toggle --pid <pid> --aid <id>              # トグル
+```
+
+### 読み取り系コマンド（一時停止中も使用可）
+
+```bash
+wpf-agent ui screenshot --pid <pid> [--save <path>]    # スクショ撮影
+wpf-agent ui controls --pid <pid> [--depth N]           # コントロール一覧 (JSON)
+wpf-agent ui read --pid <pid> --aid <id>                # テキスト読取
+wpf-agent ui state --pid <pid> --aid <id>               # 状態取得
+```
+
+### ガード管理
+
+```bash
+wpf-agent ui status                                     # ガード状態確認
+wpf-agent ui resume                                     # 再開
+wpf-agent ui --no-guard click --pid ...                 # ガードスキップ
+```
+
+全コマンド共通: `--pid <int>` または `--title-re <regex>` でターゲット指定。
+セレクタ: `--aid`, `--name`, `--control-type` (`--aid` 推奨)。
+
+## UI ガード（マウス移動検知）
+
+操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 200ms サンプリング。ユーザーのマウス移動 (>5px) を検出すると操作を中断し、持続的な一時停止状態に移行。
+
+- 中断時: exit code 2 + JSON 出力（理由付き）
+- 読み取り系コマンドは一時停止中も実行可能
+- `wpf-agent ui resume` で再開
+
+## MCP ツール一覧（13個）
 
 | ツール | 説明 |
 |--------|------|
@@ -107,13 +175,40 @@ Claude Code から呼び出せるツールです:
 | `select_combo` | コンボボックスの項目を選択 |
 | `toggle` | チェックボックス / トグルボタンの切り替え |
 | `read_text` | UI 要素のテキストを読み取り |
-| `get_state` | UI 要素の状態（enabled / visible / value 等）を取得 |
-| `screenshot` | スクリーンショットを撮影（PNG保存） |
-| `wait_for` | UI 条件の成立を待機（exists / enabled / text_equals 等） |
+| `get_state` | UI 要素の状態を取得 |
+| `screenshot` | スクリーンショットを撮影 |
+| `wait_for` | UI 条件の成立を待機 |
+
+## VS Code Copilot 対応
+
+`.claude/skills/` のスキルは [Agent Skills](https://agentskills.io) オープン標準に準拠しています。
+VS Code Copilot (Insiders / エージェントモード) が自動的に検出します — 追加設定は不要です。
+
+GitHub Copilot Coding Agent（リポジトリレベル）用にもインストールする場合:
+
+```bash
+wpf-agent install-skills --github
+```
+
+## Claude Code スラッシュコマンド
+
+| コマンド | 説明 |
+|----------|------|
+| `/wpf-setup` | セットアップと MCP サーバー登録 |
+| `/wpf-inspect` | UI 調査 (ウィンドウ + コントロール一覧 + スクリーンショット) |
+| `/wpf-explore` | AI 誘導型探索テスト |
+| `/wpf-verify` | ビルド＆自動検証 (起動→スモークテスト→UI チェック→レポート) |
+| `/wpf-click` | 要素クリック + 検証 |
+| `/wpf-type` | テキスト入力 + 検証 |
+| `/wpf-scenario` | シナリオテスト実行 / YAML 作成 |
+| `/wpf-random` | ランダム探索テスト |
+| `/wpf-replay` | AI 不要リプレイ |
+| `/wpf-ticket` | チケット確認・分析 |
+| `/wpf-ticket-create` | 問題チケット作成 (エビデンス収集付き) |
 
 ## プロファイル設定
 
-`profiles.json` を編集して対象アプリを登録します:
+`profiles.json` を編集して対象アプリを登録:
 
 ```json
 [
@@ -138,26 +233,6 @@ Claude Code から呼び出せるツールです:
     }
   }
 ]
-```
-
-### ターゲット指定方法（優先順位順）
-
-1. **PID** — 最も確実。`"match": {"pid": 12345}`
-2. **プロセス名** — `"match": {"process": "MyApp.exe"}`
-3. **EXE パス** — 起動モード。`"launch": {"exe": "C:/path/MyApp.exe", "args": ["--dev"]}`
-4. **タイトル正規表現** — `"match": {"title_re": ".*MyApp.*"}`
-
-### 安全設定
-
-デフォルトでは破壊的操作（削除 / 終了 / 外部送信等）はブロックされます。明示的に許可する場合:
-
-```json
-{
-  "safety": {
-    "allow_destructive": true,
-    "require_double_confirm": true
-  }
-}
 ```
 
 ## シナリオ定義（YAML）
@@ -191,41 +266,6 @@ steps:
         selector:
           automation_id: ServerUrlTextBox
         value: "http://localhost:1234"
-
-  - action: click
-    selector:
-      automation_id: SaveButton
-    expected:
-      - type: exists
-        selector:
-          automation_id: SavedIndicator
-```
-
-### 使用可能なアサーション
-
-| アサーション | 説明 |
-|---|---|
-| `exists` | 要素が存在するか |
-| `text_equals` | テキストが一致するか |
-| `text_contains` | テキストを含むか |
-| `enabled` | 有効状態か |
-| `visible` | 表示状態か |
-| `selected` | 選択状態か |
-| `value_equals` | 値が一致するか |
-| `regex` | テキストが正規表現にマッチするか |
-
-## チケット出力
-
-テスト失敗時に自動生成されるチケットの構成:
-
-```
-artifacts/tickets/<session-id>/TICKET-<timestamp>-<id>/
-  ticket.md           # チケット本文（再現手順 / 実結果 / 期待結果 / 根本原因仮説）
-  ticket.json          # 機械可読形式
-  repro.actions.json   # リプレイ用アクションシーケンス
-  runner.log           # 実行ログ
-  screens/             # スクリーンショット
-  uia/                 # UIA スナップショット + 差分
 ```
 
 ## プロジェクト構成
@@ -234,13 +274,14 @@ artifacts/tickets/<session-id>/TICKET-<timestamp>-<id>/
 src/wpf_agent/
   core/       # ターゲットレジストリ、セッション管理、安全チェック、例外
   uia/        # UIAEngine、セレクタ、スナップショット、スクリーンショット、待機
-  mcp/        # FastMCP サーバー（13ツール）、Pydantic 型定義
+  mcp/        # FastMCP サーバー (13ツール)、Pydantic 型定義
   runner/     # エージェントループ、リプレイ、構造化ログ
   testing/    # シナリオテスト、ランダムテスト、アサーション、障害オラクル、最小化
-  tickets/    # チケット生成、Markdown テンプレート、証跡収集
+  tickets/    # チケット生成、テンプレート、証跡収集
 scenarios/    # YAML シナリオ定義
-artifacts/    # セッションとチケット（実行時生成）
+artifacts/    # セッションとチケット (実行時生成)
 tests/        # ユニットテスト
+testApp/      # WPF テスト用サンプルアプリ (.NET 9)
 ```
 
 ## 実行ファイルのビルド
@@ -250,10 +291,12 @@ pip install pyinstaller
 pyinstaller wpf_agent.spec
 ```
 
-`dist/wpf-agent.exe` が生成されます。
-
 ## 動作要件
 
 - Windows 10 / 11
 - Python 3.10 以上
-- 対象アプリ: WPF（.NET 8 推奨、UIA 対応であれば .NET バージョン問わず）
+- 対象アプリ: WPF（UIA 対応であれば .NET バージョン問わず）
+
+## ライセンス
+
+MIT License。[LICENSE](LICENSE) を参照。

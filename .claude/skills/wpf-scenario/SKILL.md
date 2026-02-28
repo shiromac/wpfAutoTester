@@ -1,6 +1,7 @@
 ---
 name: wpf-scenario
 description: シナリオテストの実行またはYAML定義の作成
+argument-hint: scenario YAML path
 ---
 
 WPF UI自動化エージェントでシナリオテストを実行してください。

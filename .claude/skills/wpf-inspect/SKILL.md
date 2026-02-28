@@ -1,6 +1,7 @@
 ---
 name: wpf-inspect
 description: 対象アプリのUI状態を調査（ウィンドウ+コントロール一覧+スクリーンショット）
+argument-hint: PID or window title
 ---
 
 WPF UI自動化エージェントを使って対象アプリのUI状態を調査してください。

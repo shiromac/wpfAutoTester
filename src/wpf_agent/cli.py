@@ -35,8 +35,71 @@ def init():
         click.echo(f"Created {d}/")
 
     click.echo("\nInitialization complete. Edit profiles.json to add your target apps.")
-    click.echo("Then register the MCP server in Claude Code:")
+    click.echo("Then register the MCP server and install skills:")
     click.echo('  claude mcp add wpf-agent -- python -m wpf_agent mcp-serve')
+    click.echo('  wpf-agent install-skills')
+
+
+# ── install-skills ────────────────────────────────────────────────
+
+@main.command("install-skills")
+@click.option("--target", default=None, help="Target directory (default: current directory)")
+@click.option("--github", is_flag=True, default=False, help="Also install into .github/skills/ for GitHub Copilot Coding Agent")
+def install_skills(target, github):
+    """Install Claude Code slash-command skills into .claude/skills/.
+
+    Copies bundled skill files (/wpf-explore, /wpf-verify, etc.) so that
+    Claude Code auto-detects them when launched from this directory.
+
+    With --github, also copies skills into .github/skills/ for GitHub
+    Copilot Coding Agent (repository-level).
+    """
+    import importlib.resources
+
+    dest_root = pathlib.Path(target) if target else pathlib.Path.cwd()
+
+    # Locate bundled skills: try wheel-bundled _skills/ first,
+    # then fall back to .claude/skills/ in the source repo (editable install).
+    pkg_skills = importlib.resources.files("wpf_agent") / "_skills"
+    if not pkg_skills.is_dir():
+        # editable install: package is at src/wpf_agent/, repo root is ../../
+        repo_root = pathlib.Path(__file__).resolve().parent.parent.parent
+        pkg_skills = repo_root / ".claude" / "skills"
+
+    if not pkg_skills.is_dir():
+        click.echo("Bundled skills not found in package.", err=True)
+        sys.exit(1)
+
+    # Build list of destination directories
+    dest_dirs = [dest_root / ".claude" / "skills"]
+    if github:
+        dest_dirs.append(dest_root / ".github" / "skills")
+
+    for dest_skills in dest_dirs:
+        installed = []
+        for skill_dir in sorted(pkg_skills.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            skill_name = skill_dir.name
+            skill_md = skill_dir / "SKILL.md"
+            if not skill_md.is_file():
+                continue
+
+            out_dir = dest_skills / skill_name
+            out_dir.mkdir(parents=True, exist_ok=True)
+            out_file = out_dir / "SKILL.md"
+
+            # Read from package resource and write
+            out_file.write_text(skill_md.read_text(encoding="utf-8"), encoding="utf-8")
+            installed.append(skill_name)
+
+        if installed:
+            click.echo(f"Installed {len(installed)} skills into {dest_skills}/:")
+            for name in installed:
+                click.echo(f"  /{name}")
+        else:
+            click.echo("No skills found to install.", err=True)
+            sys.exit(1)
 
 
 # ── mcp-serve ─────────────────────────────────────────────────────

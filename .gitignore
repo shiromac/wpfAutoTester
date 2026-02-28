@@ -10,3 +10,4 @@ artifacts/
 .env
 testApp/bin/
 testApp/obj/
+.claude/settings.local.json

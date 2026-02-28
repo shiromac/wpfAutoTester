@@ -1,6 +1,7 @@
 ---
 name: wpf-replay
 description: 記録されたアクションのAI不要リプレイ再現
+argument-hint: actions JSON path
 ---
 
 WPF UI自動化エージェントで記録されたアクションをリプレイ（AI不要の再現）してください。

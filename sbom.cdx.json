@@ -1,0 +1,692 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-02-28T12:20:06Z",
+    "component": {
+      "type": "application",
+      "name": "wpf-agent",
+      "version": "0.1.0",
+      "description": "WPF UI Debug Automation Agent - Claude Code MCP integration",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:pypi/wpf-agent@0.1.0"
+    },
+    "tools": [
+      {
+        "name": "pip-show",
+        "version": "26.0.1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "annotated-types",
+      "version": "0.7.0",
+      "purl": "pkg:pypi/annotated-types@0.7.0",
+      "scope": "required",
+      "description": "Reusable constraint types to use with typing.Annotated",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/annotated-types/annotated-types"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "anthropic",
+      "version": "0.84.0",
+      "purl": "pkg:pypi/anthropic@0.84.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "The official Python library for the anthropic API",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/anthropics/anthropic-sdk-python"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "anyio",
+      "version": "4.12.1",
+      "purl": "pkg:pypi/anyio@4.12.1",
+      "scope": "required",
+      "description": "High-level concurrency and networking framework on top of asyncio or Trio"
+    },
+    {
+      "type": "library",
+      "name": "attrs",
+      "version": "25.4.0",
+      "purl": "pkg:pypi/attrs@25.4.0",
+      "scope": "required",
+      "description": "Classes Without Boilerplate"
+    },
+    {
+      "type": "library",
+      "name": "certifi",
+      "version": "2026.2.25",
+      "purl": "pkg:pypi/certifi@2026.2.25",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MPL-2.0"
+          }
+        }
+      ],
+      "description": "Python package for providing Mozilla's CA Bundle.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/certifi/python-certifi"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "click",
+      "version": "8.3.1",
+      "purl": "pkg:pypi/click@8.3.1",
+      "scope": "required",
+      "description": "Composable command line interface toolkit"
+    },
+    {
+      "type": "library",
+      "name": "colorama",
+      "version": "0.4.6",
+      "purl": "pkg:pypi/colorama@0.4.6",
+      "scope": "required",
+      "description": "Cross-platform colored terminal text.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/tartley/colorama"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "comtypes",
+      "version": "1.4.15",
+      "purl": "pkg:pypi/comtypes@1.4.15",
+      "scope": "required",
+      "description": "Pure Python COM package"
+    },
+    {
+      "type": "library",
+      "name": "coverage",
+      "version": "7.13.4",
+      "purl": "pkg:pypi/coverage@7.13.4",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        }
+      ],
+      "description": "Code coverage measurement for Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/coveragepy/coveragepy"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "distro",
+      "version": "1.9.0",
+      "purl": "pkg:pypi/distro@1.9.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache License, Version 2.0"
+          }
+        }
+      ],
+      "description": "Distro - an OS platform information API",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/python-distro/distro"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "h11",
+      "version": "0.16.0",
+      "purl": "pkg:pypi/h11@0.16.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/python-hyper/h11"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "httpcore",
+      "version": "1.0.9",
+      "purl": "pkg:pypi/httpcore@1.0.9",
+      "scope": "required",
+      "description": "A minimal low-level HTTP client.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.encode.io/httpcore/"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "httpx",
+      "version": "0.28.1",
+      "purl": "pkg:pypi/httpx@0.28.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ],
+      "description": "The next generation HTTP client.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/encode/httpx"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "httpx-sse",
+      "version": "0.4.3",
+      "purl": "pkg:pypi/httpx-sse@0.4.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "Consume Server-Sent Event (SSE) messages with HTTPX.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/florimondmanca/httpx-sse"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "idna",
+      "version": "3.11",
+      "purl": "pkg:pypi/idna@3.11",
+      "scope": "required",
+      "description": "Internationalized Domain Names in Applications (IDNA)"
+    },
+    {
+      "type": "library",
+      "name": "iniconfig",
+      "version": "2.3.0",
+      "purl": "pkg:pypi/iniconfig@2.3.0",
+      "scope": "required",
+      "description": "brain-dead simple config-ini parsing",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/pytest-dev/iniconfig"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "jiter",
+      "version": "0.13.0",
+      "purl": "pkg:pypi/jiter@0.13.0",
+      "scope": "required",
+      "description": "Fast iterable JSON parser.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/pydantic/jiter/"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "jsonschema",
+      "version": "4.26.0",
+      "purl": "pkg:pypi/jsonschema@4.26.0",
+      "scope": "required",
+      "description": "An implementation of JSON Schema validation for Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/python-jsonschema/jsonschema"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1",
+      "purl": "pkg:pypi/jsonschema-specifications@2025.9.1",
+      "scope": "required",
+      "description": "The JSON Schema meta-schemas and vocabularies, exposed as a Registry",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/python-jsonschema/jsonschema-specifications"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "mcp",
+      "version": "1.26.0",
+      "purl": "pkg:pypi/mcp@1.26.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "Model Context Protocol SDK",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://modelcontextprotocol.io"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packaging",
+      "version": "26.0",
+      "purl": "pkg:pypi/packaging@26.0",
+      "scope": "required",
+      "description": "Core utilities for Python packages"
+    },
+    {
+      "type": "library",
+      "name": "pillow",
+      "version": "11.0.0",
+      "purl": "pkg:pypi/pillow@11.0.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT-CMU"
+          }
+        }
+      ],
+      "description": "Python Imaging Library (Fork)",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://python-pillow.org"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pluggy",
+      "version": "1.6.0",
+      "purl": "pkg:pypi/pluggy@1.6.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "plugin and hook calling mechanisms for python"
+    },
+    {
+      "type": "library",
+      "name": "psutil",
+      "version": "7.2.2",
+      "purl": "pkg:pypi/psutil@7.2.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ],
+      "description": "Cross-platform lib for process and system monitoring.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/giampaolo/psutil"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pydantic",
+      "version": "2.12.5",
+      "purl": "pkg:pypi/pydantic@2.12.5",
+      "scope": "required",
+      "description": "Data validation using Python type hints",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/pydantic/pydantic"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pydantic-settings",
+      "version": "2.13.1",
+      "purl": "pkg:pypi/pydantic-settings@2.13.1",
+      "scope": "required",
+      "description": "Settings management using Pydantic",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/pydantic/pydantic-settings"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "Pygments",
+      "version": "2.19.2",
+      "purl": "pkg:pypi/pygments@2.19.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-Clause"
+          }
+        }
+      ],
+      "description": "Pygments is a syntax highlighting package written in Python.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://pygments.org"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "PyJWT",
+      "version": "2.11.0",
+      "purl": "pkg:pypi/pyjwt@2.11.0",
+      "scope": "required",
+      "description": "JSON Web Token implementation in Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/jpadilla/pyjwt"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pytest",
+      "version": "9.0.2",
+      "purl": "pkg:pypi/pytest@9.0.2",
+      "scope": "optional",
+      "description": "pytest: simple powerful testing with Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://docs.pytest.org/en/latest/"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pytest-cov",
+      "version": "7.0.0",
+      "purl": "pkg:pypi/pytest-cov@7.0.0",
+      "scope": "optional",
+      "description": "Pytest plugin for measuring coverage."
+    },
+    {
+      "type": "library",
+      "name": "python-dotenv",
+      "version": "1.2.1",
+      "purl": "pkg:pypi/python-dotenv@1.2.1",
+      "scope": "required",
+      "description": "Read key-value pairs from a .env file and set them as environment variables"
+    },
+    {
+      "type": "library",
+      "name": "python-multipart",
+      "version": "0.0.22",
+      "purl": "pkg:pypi/python-multipart@0.0.22",
+      "scope": "required",
+      "description": "A streaming multipart parser for Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/Kludex/python-multipart"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pywin32",
+      "version": "311",
+      "purl": "pkg:pypi/pywin32@311",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "PSF"
+          }
+        }
+      ],
+      "description": "Python for Window Extensions",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/mhammond/pywin32"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pywinauto",
+      "version": "0.6.9",
+      "purl": "pkg:pypi/pywinauto@0.6.9",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD 3-clause"
+          }
+        }
+      ],
+      "description": "A set of Python modules to automate the Microsoft Windows GUI",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/pywinauto/pywinauto"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "purl": "pkg:pypi/pyyaml@6.0.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "YAML parser and emitter for Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://pyyaml.org/"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "referencing",
+      "version": "0.37.0",
+      "purl": "pkg:pypi/referencing@0.37.0",
+      "scope": "required",
+      "description": "JSON Referencing + Python",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/python-jsonschema/referencing"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "rpds-py",
+      "version": "0.30.0",
+      "purl": "pkg:pypi/rpds-py@0.30.0",
+      "scope": "required",
+      "description": "Python bindings to Rust's persistent data structures (rpds)",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/crate-py/rpds"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "six",
+      "version": "1.17.0",
+      "purl": "pkg:pypi/six@1.17.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "description": "Python 2 and 3 compatibility utilities",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/benjaminp/six"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "sniffio",
+      "version": "1.3.1",
+      "purl": "pkg:pypi/sniffio@1.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT OR Apache-2.0"
+          }
+        }
+      ],
+      "description": "Sniff out which async library your code is running under",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/python-trio/sniffio"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "sse-starlette",
+      "version": "3.2.0",
+      "purl": "pkg:pypi/sse-starlette@3.2.0",
+      "scope": "required",
+      "description": "SSE plugin for Starlette"
+    },
+    {
+      "type": "library",
+      "name": "starlette",
+      "version": "0.52.1",
+      "purl": "pkg:pypi/starlette@0.52.1",
+      "scope": "required",
+      "description": "The little ASGI library that shines.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/Kludex/starlette"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "typing-inspection",
+      "version": "0.4.2",
+      "purl": "pkg:pypi/typing-inspection@0.4.2",
+      "scope": "required",
+      "description": "Runtime typing introspection tools",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/pydantic/typing-inspection"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "uvicorn",
+      "version": "0.41.0",
+      "purl": "pkg:pypi/uvicorn@0.41.0",
+      "scope": "required",
+      "description": "The lightning-fast ASGI server.",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://uvicorn.dev/"
+        }
+      ]
+    }
+  ]
+}
