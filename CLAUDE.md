@@ -51,14 +51,14 @@ wpf-agent tickets open --last            # チケット確認
 ```
 
 ## カスタムスキル (スラッシュコマンド)
-- `/project:wpf-setup` — セットアップ
-- `/project:wpf-inspect` — UI調査 (ウィンドウ+コントロール一覧)
-- `/project:wpf-click` — 要素クリック
-- `/project:wpf-type` — テキスト入力
-- `/project:wpf-scenario` — シナリオテスト実行/作成
-- `/project:wpf-random` — ランダムテスト
-- `/project:wpf-replay` — リプレイ再現
-- `/project:wpf-ticket` — チケット確認
+- `/wpf-setup` — セットアップとMCPサーバー登録
+- `/wpf-inspect` — UI調査 (ウィンドウ+コントロール一覧+スクリーンショット)
+- `/wpf-click` — 要素クリック+検証
+- `/wpf-type` — テキスト入力+検証
+- `/wpf-scenario` — シナリオテスト実行/YAML作成
+- `/wpf-random` — ランダム探索テスト
+- `/wpf-replay` — AI不要リプレイ再現
+- `/wpf-ticket` — チケット確認・分析
 
 ## 重要なディレクトリ
 - `src/wpf_agent/` — ソースコード

@@ -1,3 +1,8 @@
+---
+name: wpf-setup
+description: WPF UI自動化エージェントのセットアップとMCPサーバー登録
+---
+
 WPF UI自動化エージェントのセットアップを行います。
 
 手順:

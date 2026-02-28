@@ -11,7 +11,9 @@
       "Bash(git:*)",
       "Bash(dotnet:*)",
       "Bash(python:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm:*)"
     ],
     "deny": [
       "Bash(curl:*)",
