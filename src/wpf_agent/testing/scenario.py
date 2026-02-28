@@ -75,7 +75,7 @@ def run_scenario(
     scenario: Scenario,
     target: ResolvedTarget | None = None,
     session: Session | None = None,
-    step_delay_ms: int = 500,
+    step_delay_ms: int = 100,
 ) -> ScenarioResult:
     """Execute a scenario and return results."""
     if session is None:

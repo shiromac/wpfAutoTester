@@ -14,7 +14,7 @@ T = TypeVar("T")
 def wait_until(
     predicate: Callable[[], T | None],
     timeout_ms: int = DEFAULT_TIMEOUT_MS,
-    poll_ms: int = 250,
+    poll_ms: int = 100,
     message: str = "Condition not met",
 ) -> T:
     """Poll predicate until truthy or timeout."""

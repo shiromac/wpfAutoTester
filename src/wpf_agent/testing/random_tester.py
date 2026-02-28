@@ -41,7 +41,7 @@ class RandomConfig:
     action_space: ActionSpace = field(default_factory=ActionSpace)
     invariants: list[dict[str, Any]] = field(default_factory=list)
     safety: SafetyConfig = field(default_factory=SafetyConfig)
-    step_delay_ms: int = 500
+    step_delay_ms: int = 100
     oracle_interval: int = 5  # run oracles every N steps
     profile: str = ""  # profile name (resolved by CLI)
 
@@ -64,7 +64,7 @@ class RandomConfig:
             action_space=action_space,
             invariants=raw.get("invariants", []),
             safety=safety,
-            step_delay_ms=raw.get("step_delay_ms", 500),
+            step_delay_ms=raw.get("step_delay_ms", 100),
             oracle_interval=raw.get("oracle_interval", 5),
             profile=raw.get("profile", ""),
         )

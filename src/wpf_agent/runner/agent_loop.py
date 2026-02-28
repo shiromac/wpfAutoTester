@@ -27,7 +27,7 @@ class AgentLoop:
         target: ResolvedTarget,
         session: Session,
         max_steps: int = 100,
-        step_delay_ms: int = 500,
+        step_delay_ms: int = 100,
         on_step: Callable[[int, dict], None] | None = None,
     ):
         self.target = target

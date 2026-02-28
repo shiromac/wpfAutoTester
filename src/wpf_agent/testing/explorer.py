@@ -28,7 +28,7 @@ class ExploreConfig:
     max_steps: int = 50
     goal: str = ""
     safety: SafetyConfig = field(default_factory=SafetyConfig)
-    step_delay_ms: int = 1000
+    step_delay_ms: int = 100
     oracle_interval: int = 5
     model: str = "claude-sonnet-4-20250514"
     history_window: int = 10
@@ -48,7 +48,7 @@ class ExploreConfig:
             max_steps=raw.get("max_steps", 50),
             goal=raw.get("goal", ""),
             safety=safety,
-            step_delay_ms=raw.get("step_delay_ms", 1000),
+            step_delay_ms=raw.get("step_delay_ms", 100),
             oracle_interval=raw.get("oracle_interval", 5),
             model=raw.get("model", "claude-sonnet-4-20250514"),
             history_window=raw.get("history_window", 10),

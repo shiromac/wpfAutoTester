@@ -23,7 +23,7 @@ def replay_actions(
     actions: list[dict[str, Any]],
     target: ResolvedTarget,
     session: Session | None = None,
-    step_delay_ms: int = 500,
+    step_delay_ms: int = 100,
 ) -> list[dict[str, Any]]:
     """Replay a list of recorded actions without AI.
 
