@@ -110,36 +110,32 @@ wpf-agent random run --profile MyApp --max-steps 200 --seed 42
 wpf-agent replay --file artifacts/sessions/<session-id>/actions.json --profile MyApp
 ```
 
-### チケット確認
+### チケット管理
 
 ```bash
+# CLI でチケット作成
+wpf-agent tickets create --title "ボタンクリックでクラッシュ" --summary "保存ボタン押下時に異常終了" \
+  --actual "クラッシュ" --expected "正常保存" --repro "MainButton をクリック" --pid 1234
+
 # 最新のチケットを表示
 wpf-agent tickets open --last
 
 # 全チケット一覧
 wpf-agent tickets open
-```
 
-### チケット整理
-
-未分類チケットを `fix`（修正対象）/ `wontfix`（修正しない）に分類:
-
-```bash
 # 未分類チケット一覧
 wpf-agent tickets list-pending
 
-# fix/ に移動
-wpf-agent tickets triage --ticket artifacts/tickets/<session>/<TICKET-xxx> --decision fix --reason "クラッシュ検出"
-
-# wontfix/ に移動
-wpf-agent tickets triage --ticket artifacts/tickets/<session>/<TICKET-xxx> --decision wontfix --reason "仕様通りの動作"
+# 分類: fix または wontfix に移動
+wpf-agent tickets triage --ticket <path> --decision fix --reason "クラッシュ検出"
+wpf-agent tickets triage --ticket <path> --decision wontfix --reason "仕様通りの動作"
 ```
 
-スラッシュコマンドで AI 支援の整理も可能:
+スラッシュコマンドでも操作可能:
 
 ```
+/wpf-ticket-create 保存ボタンクリック後にアプリがクラッシュした
 /wpf-ticket-triage auto
-/wpf-ticket-triage manual
 ```
 
 ## `wpf-agent ui` — 直接 UI 操作コマンド
@@ -322,31 +318,26 @@ pyinstaller wpf_agent.spec
 
 ## Claude Code パーミッション設定
 
-Claude Code がパイプ付きの複雑なコマンド（例: `wpf-agent ui controls | python -c "..." | head`）を実行する際、毎回許可を求められることがあります。自動承認するには `.claude/settings.local.json`（プロジェクトローカル、gitignore 対象）を設定します:
+`wpf-agent` コマンドを自動承認するには、`.claude/settings.local.json`（プロジェクトローカル、gitignore 対象）に以下を設定します:
 
 ```jsonc
 {
   "permissions": {
     "allow": [
       "Bash(wpf-agent *)",   // コマンド文字列全体にマッチ（パイプ含む）
-      "Bash(wpf-agent:*)",   // コマンド名プレフィックスにマッチ（パイプなし）
-      "Bash(python:*)",
-      "Bash(python3:*)"
+      "Bash(wpf-agent:*)",   // コマンド名プレフィックスにマッチ（単純コマンド）
+      "Bash(python:*)"
     ]
   }
 }
 ```
 
-**パターン構文の違い:**
-
-| パターン | マッチ対象 | 備考 |
+| パターン | マッチ対象 | 用途 |
 |---------|-----------|------|
-| `Bash(コマンド名:*)` | **コマンド名** のプレフィックス | パイプ付きコマンドにはマッチしない |
-| `Bash(コマンド名 *)` | **コマンド文字列全体** | パイプ含む: `wpf-agent ... \| python ...` にマッチ |
+| `Bash(wpf-agent:*)` | **コマンド名** のプレフィックス | 単純: `wpf-agent tickets create ...` |
+| `Bash(wpf-agent *)` | **コマンド文字列全体** | パイプ付き: `wpf-agent ui controls ... \| head` |
 
-`wpf-agent ui controls --pid 1234 | python -c "..." | head -30` のようなパイプ付きコマンドには、`Bash(wpf-agent *)` (スペース区切り) が必要です。コマンド文字列全体がパターンと照合されるためです。
-
-**複数行コマンドの注意:** glob の `*` は**改行にマッチしません**。`python -c "..."` を複数行で書くと `Bash(wpf-agent *)` にマッチしなくなります。パイプ付き Python は `;` で1行にまとめるか、一時スクリプトファイルを使用してください。
+両方の設定を推奨。glob の `*` は改行にマッチしないため、Bash コマンドは常に1行で記述してください。
 
 Claude Code 内で `/permissions` を実行すると、現在有効なルールを確認できます。
 
