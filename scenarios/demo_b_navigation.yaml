@@ -1,0 +1,43 @@
+id: demo-b-navigation
+title: "Demo B: Navigation with dialog interaction"
+tags: [demo, navigation, dialog]
+owner: wpf-agent
+profile: example
+
+steps:
+  - action: focus_window
+    selector: {}
+    args: {}
+
+  - action: click
+    selector:
+      automation_id: MenuButton
+    args: {}
+
+  - action: click
+    selector:
+      automation_id: NavigateItem
+    args: {}
+    expected:
+      - type: exists
+        selector:
+          automation_id: DetailPage
+
+  - action: click
+    selector:
+      automation_id: ActionButton
+    args: {}
+    expected:
+      - type: exists
+        selector:
+          name: "Confirm"
+          control_type: Window
+
+  - action: click
+    selector:
+      automation_id: ConfirmOkButton
+    args: {}
+    expected:
+      - type: exists
+        selector:
+          automation_id: SuccessMessage

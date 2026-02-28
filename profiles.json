@@ -1,0 +1,20 @@
+[
+  {
+    "name": "example",
+    "match": {
+      "title_re": ".*"
+    },
+    "timeouts": {
+      "startup_ms": 15000,
+      "default_ms": 10000,
+      "screenshot_ms": 5000
+    },
+    "safety": {
+      "allow_destructive": false,
+      "destructive_patterns": [
+        "delete", "remove", "drop", "exit", "quit", "close", "shutdown"
+      ],
+      "require_double_confirm": true
+    }
+  }
+]
