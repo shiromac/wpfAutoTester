@@ -67,11 +67,74 @@ wpf-agent ui state --pid <pid> --aid <automation_id>
 再度スクリーンショットを撮影し、期待通りの変化があったか確認する。
 問題（クラッシュ、表示崩れ、予期せぬエラー）を発見したら記録する。
 
-### 4. 完了
-全ての主要 UI 要素を一通り操作したら、発見事項をまとめて報告する。
+### 4. チケット作成（必須）
 
-## 報告フォーマット
-探索完了後、以下の形式で報告:
+探索が完了したら（中断された場合も含め）、**必ず**チケットを作成する。
+問題が見つからなかった場合も「問題なし」のチケットを作成する。
+
+```bash
+# タイムスタンプ付きディレクトリを作成
+python -c "
+import json, pathlib, time
+from wpf_agent.tickets.templates import render_ticket_md, default_environment
+
+env = default_environment()
+env['Target PID'] = '<pid>'
+env['Target Process'] = '<process>'
+
+md = render_ticket_md(
+    title='<タイトル>',
+    summary='<概要>',
+    repro_steps=[
+        '<ステップ1: wpf-agent ui ... コマンド>',
+        '<ステップ2: wpf-agent ui ... コマンド>',
+    ],
+    actual_result='<実際の結果>',
+    expected_result='<期待される結果>',
+    environment=env,
+    evidence_files=['<スクリーンショットパス>'],
+    root_cause_hypothesis='<原因の仮説 (あれば)>',
+)
+
+ts = time.strftime('%Y%m%d-%H%M%S')
+ticket_dir = pathlib.Path('artifacts/tickets') / f'TICKET-{ts}'
+ticket_dir.mkdir(parents=True, exist_ok=True)
+
+(ticket_dir / 'ticket.md').write_text(md, encoding='utf-8')
+
+ticket_data = {
+    'title': '<タイトル>',
+    'summary': '<概要>',
+    'status': '<PASS or FAIL>',
+    'repro_steps': ['<ステップ>'],
+    'actual_result': '<実際の結果>',
+    'expected_result': '<期待される結果>',
+    'environment': env,
+    'timestamp': ts,
+}
+(ticket_dir / 'ticket.json').write_text(
+    json.dumps(ticket_data, indent=2, ensure_ascii=False), encoding='utf-8'
+)
+print(f'Ticket created: {ticket_dir}')
+print(md)
+"
+```
+
+#### チケットタイトルのルール
+- **問題あり**: 具体的な問題を記述 (例: `ボタンクリック後にステータスが更新されない`)
+- **問題なし**: `UI探索テスト完了 — 問題なし (<アプリ名>)` の形式
+
+#### エビデンスのコピー
+```bash
+mkdir -p <ticket_dir>/screens
+cp artifacts/sessions/explore_step_*.png <ticket_dir>/screens/
+```
+
+### 5. ユーザーへの報告
+
+以下を必ず表示する:
+- チケットのパス
+- ticket.md の内容
 - 探索したUI要素の一覧
 - 実行した操作のサマリ
 - 発見した問題（あれば）
@@ -92,17 +155,8 @@ UI 操作コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウ
 
 **中断を検知したら:**
 1. 探索ループを即座に停止する
-2. 現在までの発見事項をユーザーに報告する
-3. 再開の指示を待つ（ユーザーが `wpf-agent ui resume` を実行するか、`/wpf-explore` を再度呼び出す）
-
-**再開手順:**
-```bash
-# 一時停止状態を確認
-wpf-agent ui status
-
-# 再開
-wpf-agent ui resume
-```
+2. **それまでの結果でチケットを作成する**（手順4へ進む）
+3. ユーザーに報告する
 
 読み取り専用コマンド (`screenshot`, `controls`, `read`, `state`) は一時停止中も実行可能。
 
@@ -110,3 +164,4 @@ wpf-agent ui resume
 - 各ステップでスクリーンショットを保存し、変化を追跡すること
 - アプリがクラッシュした場合は再起動して続行
 - 破壊的操作（削除ボタン等）は慎重に判断すること
+- **チケット作成をスキップしないこと** — 探索の成果物として必ず残す
