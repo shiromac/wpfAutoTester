@@ -287,6 +287,8 @@ When Claude Code runs complex piped commands (e.g., `wpf-agent ui controls | pyt
 
 For piped commands like `wpf-agent ui controls --pid 1234 | python -c "..." | head -30`, you need `Bash(wpf-agent *)` (space separator) because the entire command string is matched against the pattern.
 
+**Note on multi-line commands:** The `*` glob does **not** match newline characters. If a command contains multi-line `python -c "..."`, it won't match `Bash(wpf-agent *)`. Write piped Python as a one-liner using `;` separators, or use a temp script file.
+
 Use `/permissions` in Claude Code to inspect active rules.
 
 ## License

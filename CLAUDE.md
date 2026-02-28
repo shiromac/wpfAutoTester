@@ -3,6 +3,14 @@
 ## プロジェクト概要
 Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作する。
 
+## Bash コマンド生成ルール
+- `wpf-agent` やパイプ付きコマンドは**必ず1行で記述**すること（改行禁止）
+  - glob パーミッション `Bash(wpf-agent *)` の `*` は改行にマッチしない
+  - 複数行の `python -c` は `;` で1行にまとめる
+  - OK: `wpf-agent ui controls --pid 1234 | python -c "import json,sys; data=json.load(sys.stdin); [print(c['name']) for c in data if c.get('name')]"`
+  - NG: `wpf-agent ui controls --pid 1234 | python -c "\nimport json\n..."`
+  - 複雑なフィルタが必要なら一時スクリプトファイルを作成して実行する
+
 ## MCP サーバー
 このプロジェクトは MCP サーバーを提供する。登録コマンド:
 ```

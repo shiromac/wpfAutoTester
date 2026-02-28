@@ -346,6 +346,8 @@ Claude Code がパイプ付きの複雑なコマンド（例: `wpf-agent ui cont
 
 `wpf-agent ui controls --pid 1234 | python -c "..." | head -30` のようなパイプ付きコマンドには、`Bash(wpf-agent *)` (スペース区切り) が必要です。コマンド文字列全体がパターンと照合されるためです。
 
+**複数行コマンドの注意:** glob の `*` は**改行にマッチしません**。`python -c "..."` を複数行で書くと `Bash(wpf-agent *)` にマッチしなくなります。パイプ付き Python は `;` で1行にまとめるか、一時スクリプトファイルを使用してください。
+
 Claude Code 内で `/permissions` を実行すると、現在有効なルールを確認できます。
 
 ## ライセンス
