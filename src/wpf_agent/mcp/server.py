@@ -12,6 +12,7 @@ from mcp.server.fastmcp import FastMCP
 from wpf_agent.core.errors import WpfAgentError
 from wpf_agent.core.target import ResolvedTarget, TargetRegistry
 from wpf_agent.uia.engine import UIAEngine
+from wpf_agent.uia.screenshot import capture_screenshot
 from wpf_agent.uia.selector import Selector
 
 mcp = FastMCP("wpf-agent")
@@ -230,8 +231,6 @@ def screenshot(
     Returns the path to the saved PNG file.
     """
     try:
-        from wpf_agent.uia.screenshot import capture_screenshot
-
         t = None
         if window_query or target_id:
             t = _resolve_target(window_query or None, target_id or None)
