@@ -49,6 +49,7 @@ packages = ["src/wpf_agent"]
 
 [tool.hatch.build.targets.wheel.force-include]
 ".claude/skills" = "wpf_agent/_skills"
+"src/wpf_agent/_claude_md_snippet.md" = "wpf_agent/_claude_md_snippet.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

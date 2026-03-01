@@ -50,11 +50,16 @@ def init():
 @main.command("install-skills")
 @click.option("--target", default=None, help="Target directory (default: current directory)")
 @click.option("--github", is_flag=True, default=False, help="Also install into .github/skills/ for GitHub Copilot Coding Agent")
-def install_skills(target, github):
+@click.option("--no-claude-md", is_flag=True, default=False, help="Skip updating CLAUDE.md")
+@click.option("-y", "--yes", is_flag=True, default=False, help="Skip confirmation prompt for CLAUDE.md update")
+def install_skills(target, github, no_claude_md, yes):
     """Install Claude Code slash-command skills into .claude/skills/.
 
     Copies bundled skill files (/wpf-explore, /wpf-verify, etc.) so that
     Claude Code auto-detects them when launched from this directory.
+
+    Also appends a wpf-agent guide section to CLAUDE.md (with confirmation).
+    Use --no-claude-md to skip the CLAUDE.md update.
 
     With --github, also copies skills into .github/skills/ for GitHub
     Copilot Coding Agent (repository-level).
@@ -105,6 +110,75 @@ def install_skills(target, github):
         else:
             click.echo("No skills found to install.", err=True)
             sys.exit(1)
+
+    # ── Update CLAUDE.md with wpf-agent guide ──
+    if not no_claude_md:
+        _update_claude_md(dest_root, yes)
+
+
+_MARKER_START = "<!-- wpf-agent:start -->"
+_MARKER_END = "<!-- wpf-agent:end -->"
+
+
+def _load_snippet() -> str:
+    """Load the CLAUDE.md snippet from package resources or source tree."""
+    import importlib.resources
+
+    # Try wheel-bundled file first
+    pkg_file = importlib.resources.files("wpf_agent") / "_claude_md_snippet.md"
+    try:
+        return pkg_file.read_text(encoding="utf-8")
+    except (FileNotFoundError, TypeError):
+        pass
+
+    # Editable install: source tree
+    src_path = pathlib.Path(__file__).resolve().parent / "_claude_md_snippet.md"
+    if src_path.is_file():
+        return src_path.read_text(encoding="utf-8")
+
+    raise FileNotFoundError("wpf-agent CLAUDE.md snippet not found in package.")
+
+
+def _update_claude_md(dest_root: pathlib.Path, skip_confirm: bool) -> None:
+    """Append or update the wpf-agent section in CLAUDE.md."""
+    snippet = _load_snippet()
+    claude_md = dest_root / "CLAUDE.md"
+
+    if claude_md.is_file():
+        content = claude_md.read_text(encoding="utf-8")
+        start_idx = content.find(_MARKER_START)
+        end_idx = content.find(_MARKER_END)
+
+        if start_idx != -1 and end_idx != -1:
+            # Marker found — replace between markers (inclusive)
+            end_idx += len(_MARKER_END)
+            # Preserve trailing newline after end marker
+            if end_idx < len(content) and content[end_idx] == "\n":
+                end_idx += 1
+            new_content = content[:start_idx] + snippet.rstrip("\n") + "\n" + content[end_idx:]
+            action = "update"
+        else:
+            # No markers — append to end
+            new_content = content.rstrip("\n") + "\n\n" + snippet.rstrip("\n") + "\n"
+            action = "append"
+    else:
+        new_content = snippet.rstrip("\n") + "\n"
+        action = "create"
+
+    # Confirm with user before writing
+    if not skip_confirm:
+        action_msg = {
+            "create": f"Create {claude_md} with wpf-agent guide?",
+            "append": f"Append wpf-agent guide to {claude_md}?",
+            "update": f"Update wpf-agent guide in {claude_md}?",
+        }
+        if not click.confirm(action_msg[action], default=True):
+            click.echo("Skipped CLAUDE.md update.")
+            return
+
+    claude_md.write_text(new_content, encoding="utf-8")
+    action_past = {"create": "Created", "append": "Appended to", "update": "Updated"}
+    click.echo(f"{action_past[action]} {claude_md} with wpf-agent guide.")
 
 
 # ── mcp-serve ─────────────────────────────────────────────────────
