@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json as _json
+import pathlib
 import re
 import subprocess
 import threading
@@ -182,7 +183,8 @@ class TargetRegistry:
     def _resolve_by_exe(
         self, exe: str, args: list[str], cwd: str | None
     ) -> tuple[str, ResolvedTarget]:
-        cmd = [exe] + args
+        exe_path = str(pathlib.Path(exe).resolve())
+        cmd = [exe_path] + args
         proc = subprocess.Popen(cmd, cwd=cwd)
         time.sleep(2)
         if proc.poll() is not None:
