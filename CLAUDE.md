@@ -194,4 +194,4 @@ WPF (.NET 9) のデバッグ用サンプルアプリ。ビルド済み exe:
 ```
 testApp/bin/Debug/net9.0-windows/TestApp.exe
 ```
-UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionCheck, CounterLabel
+UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionCheck, ColorCombo, CounterLabel

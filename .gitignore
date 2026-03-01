@@ -11,3 +11,4 @@ artifacts/
 testApp/bin/
 testApp/obj/
 .claude/settings.local.json
+*.sln

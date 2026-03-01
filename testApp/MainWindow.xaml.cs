@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 
 namespace TestApp;
 
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     {
         _clickCount = 0;
         OptionCheck.IsChecked = false;
+        ColorCombo.SelectedIndex = 0;
         StatusLabel.Text = "Ready";
         CounterLabel.Text = "Clicks: 0";
         InputField.Text = "";
@@ -30,5 +32,14 @@ public partial class MainWindow : Window
     private void OptionCheck_Changed(object sender, RoutedEventArgs e)
     {
         StatusLabel.Text = OptionCheck.IsChecked == true ? "Option enabled" : "Option disabled";
+    }
+
+    private void ColorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (StatusLabel == null) return;
+        if (ColorCombo.SelectedItem is ComboBoxItem item)
+        {
+            StatusLabel.Text = $"Selected: {item.Content}";
+        }
     }
 }

@@ -16,6 +16,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="16"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -67,8 +69,23 @@
                   Unchecked="OptionCheck_Changed"
                   AutomationProperties.AutomationId="OptionCheck"/>
 
+        <!-- ComboBox -->
+        <DockPanel Grid.Row="10">
+            <TextBlock Text="Color:" VerticalAlignment="Center" Width="50"/>
+            <ComboBox x:Name="ColorCombo"
+                      Height="30"
+                      SelectedIndex="0"
+                      SelectionChanged="ColorCombo_SelectionChanged"
+                      AutomationProperties.AutomationId="ColorCombo">
+                <ComboBoxItem Content="Red"/>
+                <ComboBoxItem Content="Green"/>
+                <ComboBoxItem Content="Blue"/>
+                <ComboBoxItem Content="Yellow"/>
+            </ComboBox>
+        </DockPanel>
+
         <!-- Counter at bottom -->
-        <TextBlock Grid.Row="10"
+        <TextBlock Grid.Row="12"
                    x:Name="CounterLabel"
                    Text="Clicks: 0"
                    FontSize="12"
