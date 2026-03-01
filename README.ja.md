@@ -154,12 +154,23 @@ wpf-agent ui toggle --pid <pid> --aid <id>              # トグル
 ### 読み取り系コマンド（一時停止中も使用可）
 
 ```bash
-wpf-agent ui screenshot --pid <pid> [--save <path>]    # スクショ撮影
-wpf-agent ui controls --pid <pid> [--depth N]           # コントロール一覧 (JSON)
-# フィルタ: --type-filter Button,Edit --has-name --has-aid --brief
-wpf-agent ui read --pid <pid> --aid <id>                # テキスト読取
-wpf-agent ui state --pid <pid> --aid <id>               # 状態取得
+wpf-agent ui screenshot --pid <pid> [--save <path>]     # スクショ撮影
+wpf-agent ui controls --pid <pid> [--depth N]            # 全コントロール一覧 (JSON)
+wpf-agent ui controls --pid <pid> --has-aid --brief      # automation_id 付きのみ (テーブル)
+wpf-agent ui controls --pid <pid> --type-filter Button,Edit,ComboBox --brief
+wpf-agent ui read --pid <pid> --aid <id>                 # テキスト読取
+wpf-agent ui state --pid <pid> --aid <id>                # 状態取得
 ```
+
+`ui controls` フィルタオプション:
+
+| オプション | 説明 |
+|-----------|------|
+| `--type-filter` | control_type でフィルタ (カンマ区切り) |
+| `--name-filter` | name の部分一致フィルタ (大文字小文字無視) |
+| `--has-name` | name が空でないもののみ |
+| `--has-aid` | automation_id が空でないもののみ |
+| `--brief` | JSON の代わりにコンパクトなテーブル出力 |
 
 ### ガード管理
 

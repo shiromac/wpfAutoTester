@@ -148,12 +148,23 @@ wpf-agent ui toggle --pid <pid> --aid <id>              # Toggle checkbox
 ### Read-Only Commands (always available, even when paused)
 
 ```bash
-wpf-agent ui screenshot --pid <pid> [--save <path>]    # Take screenshot
-wpf-agent ui controls --pid <pid> [--depth N]           # List controls (JSON)
-# Filter options: --type-filter Button,Edit --has-name --has-aid --brief
-wpf-agent ui read --pid <pid> --aid <id>                # Read text
-wpf-agent ui state --pid <pid> --aid <id>               # Get state
+wpf-agent ui screenshot --pid <pid> [--save <path>]     # Take screenshot
+wpf-agent ui controls --pid <pid> [--depth N]            # List all controls (JSON)
+wpf-agent ui controls --pid <pid> --has-aid --brief      # Only controls with automation_id (table)
+wpf-agent ui controls --pid <pid> --type-filter Button,Edit,ComboBox --brief
+wpf-agent ui read --pid <pid> --aid <id>                 # Read text
+wpf-agent ui state --pid <pid> --aid <id>                # Get state
 ```
+
+`ui controls` filter options:
+
+| Option | Description |
+|--------|-------------|
+| `--type-filter` | Filter by control_type (comma-separated) |
+| `--name-filter` | Filter by name (substring, case-insensitive) |
+| `--has-name` | Only controls with non-empty name |
+| `--has-aid` | Only controls with non-empty automation_id |
+| `--brief` | Compact table output instead of JSON |
 
 ### Guard Management
 
