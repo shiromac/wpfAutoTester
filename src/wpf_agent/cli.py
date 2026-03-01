@@ -172,9 +172,14 @@ def _update_claude_md(dest_root: pathlib.Path, skip_confirm: bool) -> None:
             "append": f"Append wpf-agent guide to {claude_md}?",
             "update": f"Update wpf-agent guide in {claude_md}?",
         }
-        if not click.confirm(action_msg[action], default=True):
-            click.echo("Skipped CLAUDE.md update.")
-            return
+        try:
+            if not click.confirm(action_msg[action], default=True):
+                click.echo("Skipped CLAUDE.md update.")
+                return
+        except click.Abort:
+            # Non-interactive (no TTY) — accept by default
+            click.echo(f"(non-interactive) Auto-accepting: {action_msg[action]}")
+            pass
 
     claude_md.write_text(new_content, encoding="utf-8")
     action_past = {"create": "Created", "append": "Appended to", "update": "Updated"}
