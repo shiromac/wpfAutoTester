@@ -42,4 +42,6 @@ class Selector(BaseModel):
             kw["title"] = self.name
         if self.control_type:
             kw["control_type"] = self.control_type
+        if self.index is not None:
+            kw["found_index"] = self.index
         return kw

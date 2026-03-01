@@ -234,12 +234,7 @@ def _find_element(target: ResolvedTarget, selector: Selector) -> UIAWrapper:
 
     try:
         child = win.child_window(**kw)
-        wrapper = child.wrapper_object()
-        if selector.index is not None:
-            children = win.children(**kw)
-            if selector.index < len(children):
-                return children[selector.index]
-        return wrapper
+        return child.wrapper_object()
     except Exception as exc:
         raise SelectorNotFoundError(
             f"Element not found: {selector.describe()} — {exc}"

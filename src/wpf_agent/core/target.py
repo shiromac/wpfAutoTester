@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json
 import re
 import subprocess
 import threading
@@ -11,7 +12,46 @@ from typing import Any, Optional
 import psutil
 
 from wpf_agent.config import Profile, ProfileMatch
+from wpf_agent.constants import LAUNCHED_PIDS_FILE
 from wpf_agent.core.errors import TargetNotFoundError
+
+
+# ── Launched PID tracking ────────────────────────────────────────
+# Records PIDs started via `wpf-agent launch` / `_resolve_by_exe`
+# so that `wpf-agent ui close` can verify it only closes processes
+# that *we* started.
+
+def _record_launched_pid(pid: int, exe: str) -> None:
+    """Persist a launched PID to disk."""
+    entries = _load_launched_entries()
+    entries.append({"pid": pid, "exe": exe, "ts": time.time()})
+    LAUNCHED_PIDS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LAUNCHED_PIDS_FILE.write_text(
+        _json.dumps(entries, indent=2), encoding="utf-8"
+    )
+
+
+def _load_launched_entries() -> list[dict]:
+    if LAUNCHED_PIDS_FILE.is_file():
+        try:
+            return _json.loads(LAUNCHED_PIDS_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def is_launched_pid(pid: int) -> bool:
+    """Return True if *pid* was started by wpf-agent launch."""
+    return any(e["pid"] == pid for e in _load_launched_entries())
+
+
+def remove_launched_pid(pid: int) -> None:
+    """Remove a PID from the launched list (after close)."""
+    entries = [e for e in _load_launched_entries() if e["pid"] != pid]
+    LAUNCHED_PIDS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LAUNCHED_PIDS_FILE.write_text(
+        _json.dumps(entries, indent=2), encoding="utf-8"
+    )
 
 
 class ResolvedTarget:
@@ -148,6 +188,7 @@ class TargetRegistry:
         if proc.poll() is not None:
             raise TargetNotFoundError(f"Process exited immediately: {exe}")
         basename = exe.replace("\\", "/").rsplit("/", 1)[-1]
+        _record_launched_pid(proc.pid, exe)
         t = ResolvedTarget(pid=proc.pid, process_name=basename)
         tid = self._register(t)
         return tid, t

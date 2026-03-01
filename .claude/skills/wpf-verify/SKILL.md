@@ -43,22 +43,22 @@ wpf-agent verify --exe <path/to/App.exe> --spec verify-spec.yaml
 - **VERIFICATION PASSED**: 全チェック合格
 - **VERIFICATION FAILED**: 問題あり → 失敗内容を分析してコード修正を提案
 
-### 5. チケット作成（必須）
+### 5. チケット作成（必須 — スキップ禁止）
 
-検証結果に関わらず、**必ず** `/wpf-ticket-create` スキルを呼び出してチケットを作成する。
+検証結果に関わらず、**必ず以下の CLI コマンドでチケットを作成する**。
 
-呼び出し例:
-```
-/wpf-ticket-create 検証完了 — 全チェック合格。exe: bin/Debug/net9.0-windows/MyApp.exe。起動OK、UI応答OK、エラーダイアログなし。
-```
+#### a. 検証結果を整理して以下を決定
+- **title**: PASSED なら `検証完了 — 全チェック合格 (<アプリ名>)` / FAILED なら具体的な失敗を記述
+- **summary**: 検証対象 exe と結果の要約
+- **actual**: 実際の検証結果
+- **expected**: 期待される動作
+- **evidence**: verify で保存されたスクリーンショットのパス
 
+#### b. CLI でチケットを作成
+```bash
+wpf-agent tickets create --title "タイトル" --summary "概要" --actual "実際の結果" --expected "期待される結果" --evidence "スクリーンショットパス" --hypothesis "原因の仮説"
 ```
-/wpf-ticket-create 起動後にUIが応答しない。wpf-agent verify --exe bin/Debug/net9.0-windows/MyApp.exe で responsive チェックが FAIL。
-```
-
-#### チケットタイトルのルール
-- **PASSED**: `検証完了 — 全チェック合格 (<アプリ名>)`
-- **FAILED**: 具体的な失敗を記述 (例: `起動後にUIが応答しない`)
+**注意**: 全引数を1行で記述すること。
 
 ### 6. 失敗時のデバッグフロー
 1. 失敗した check の名前とメッセージを確認

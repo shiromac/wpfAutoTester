@@ -75,16 +75,18 @@ wpf-agent ui focus --pid <pid>                           # ウィンドウフォ
 wpf-agent ui click --pid <pid> --aid <id>                # クリック
 wpf-agent ui type --pid <pid> --aid <id> --text "..."    # テキスト入力
 wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
+wpf-agent ui close --pid <pid>                           # WM_CLOSE で終了 (launch 起動のみ)
 ```
 
 #### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
 ```
-wpf-agent ui screenshot --pid <pid> [--save <path>]      # スクショ撮影
+wpf-agent ui windows [--brief]                            # トップレベルウィンドウ一覧 (PID/タイトル)
+wpf-agent ui alive --process <name> [--brief]             # プロセス生存確認 + PID取得
+wpf-agent ui alive --pid <pid>                            # PID指定の生存確認
+wpf-agent ui screenshot --pid <pid> [--save <path>]       # スクショ撮影 (ポップアップ自動合成)
 wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--has-aid] [--brief]  # コントロール一覧
 wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
 wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
-wpf-agent ui alive --pid <pid>                            # プロセス生存確認 (PID)
-wpf-agent ui alive --process <name>                       # プロセス生存確認 (プロセス名)
 ```
 
 #### ガード管理コマンド
@@ -97,8 +99,23 @@ wpf-agent ui --no-guard click --pid ...   # ガードをスキップして実行
 全コマンド共通: `--pid <int>` または `--title-re <regex>` でターゲット指定。
 セレクタ: `--aid`, `--name`, `--control-type` で要素指定 (aid 推奨)。
 
+#### 典型的な作業フロー
+```bash
+# 1. ウィンドウ一覧から対象アプリを探す
+wpf-agent ui windows --brief
+
+# 2. プロセス名から PID を取得 (--brief で数値だけ出力)
+wpf-agent ui alive --process MyApp --brief
+#=> 12345
+
+# 3. 以降は --pid で操作
+wpf-agent ui controls --pid 12345 --brief
+wpf-agent ui screenshot --pid 12345 --save /tmp/screen.png
+wpf-agent ui click --pid 12345 --aid BtnOK
+```
+
 ### UI ガード (マウス移動検知)
-操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 200ms サンプリングし、ユーザーのマウス移動 (>5px) を検出すると操作を中断する。中断後は pause ファイル (`~/.wpf-agent/pause`) で持続的にブロックされる。
+操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 50ms サンプリングし、ユーザーのマウス移動 (>2px) を検出すると操作を中断する。中断後は pause ファイル (`~/.wpf-agent/pause`) で持続的にブロックされる。`close` はガード対象外（launch 起動プロセス限定で安全なため）。
 
 - 中断時: exit code 2 + `{"interrupted": true, "reason": "...", ...}` を JSON 出力
 - 実装: `src/wpf_agent/ui_guard.py` (check_guard, is_paused, set_paused, clear_pause)
@@ -116,6 +133,7 @@ wpf-agent ui --no-guard click --pid ...   # ガードをスキップして実行
 - `/wpf-replay` — AI不要リプレイ再現
 - `/wpf-ticket` — チケット確認・分析
 - `/wpf-ticket-create` — 問題チケット作成 (ticket.md + エビデンス収集)
+- `/wpf-usability-test` — ペルソナ型ユーザビリティテスト（思考発話法 + ゴール指向）
 - `/wpf-ticket-triage` — チケット整理 (fix / wontfix に分類・移動)
 
 ## ディレクトリ構成

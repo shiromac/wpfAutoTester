@@ -23,9 +23,29 @@ mcp = FastMCP("wpf-agent")
 def _resolve_target(
     window_query: str | None = None, target_id: str | None = None
 ) -> ResolvedTarget:
-    """Resolve target from window_query or target_id."""
+    """Resolve target from window_query or target_id.
+
+    Accepts shorthand target_id formats that auto-resolve without a
+    prior ``resolve_target`` call:
+      - ``pid:<N>``          — resolve by PID
+      - ``process:<name>``   — resolve by process name
+      - ``title_re:<regex>`` — resolve by window title regex
+    """
     registry = TargetRegistry.get_instance()
     if target_id:
+        # Auto-resolve shorthand formats so callers can skip resolve_target
+        if target_id.startswith("pid:"):
+            pid = int(target_id.split(":", 1)[1])
+            _, t = registry.resolve({"pid": pid})
+            return t
+        if target_id.startswith("process:"):
+            name = target_id.split(":", 1)[1]
+            _, t = registry.resolve({"process": name})
+            return t
+        if target_id.startswith("title_re:"):
+            pattern = target_id.split(":", 1)[1]
+            _, t = registry.resolve({"title_re": pattern})
+            return t
         return registry.get(target_id)
     if window_query:
         _, t = registry.resolve({"title_re": window_query})
@@ -124,6 +144,8 @@ def list_controls(
 def click(window_query: str = "", target_id: str = "", selector: dict = {}) -> str:
     """Click a UI element.
 
+    target_id accepts registered IDs (e.g. "target-1") or shorthand formats
+    that auto-resolve: "pid:12345", "process:MyApp.exe", "title_re:.*MyApp.*".
     Selector priority: automation_id > name+control_type > bounding_rect center.
     """
     try:

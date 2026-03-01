@@ -492,11 +492,32 @@ def ui_status():
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
+@ui_cmd.command("windows")
+@click.option("--brief", is_flag=True, default=False, help="Compact table output instead of JSON")
+def ui_windows(brief):
+    """List visible top-level windows (PID, title, handle)."""
+    from wpf_agent.uia.engine import UIAEngine
+
+    windows = UIAEngine.list_windows()
+    # Filter to visible windows with a title
+    windows = [w for w in windows if w.get("visible") and w.get("title", "").strip()]
+
+    if brief:
+        for w in windows:
+            click.echo(f"pid={w['pid']:<8d} handle={w['handle']:<10d} title={w['title']}")
+    else:
+        click.echo(json.dumps(windows, ensure_ascii=False, indent=2))
+
+
 @ui_cmd.command("alive")
 @click.option("--pid", default=None, type=int, help="Process ID to check")
 @click.option("--process", default=None, help="Process name to find (e.g. MyApp or MyApp.exe)")
-def ui_alive(pid, process):
-    """Check if a process is running (by PID or process name)."""
+@click.option("--brief", is_flag=True, default=False, help="Output PID(s) only, one per line")
+def ui_alive(pid, process, brief):
+    """Check if a process is running (by PID or process name).
+
+    With --brief, outputs only PID number(s) for easy scripting.
+    """
     import ctypes
 
     if not pid and not process:
@@ -518,8 +539,12 @@ def ui_alive(pid, process):
             if len(parts) >= 2 and parts[0].lower() == name.lower():
                 matches.append({"pid": int(parts[1]), "process": parts[0]})
 
-        result = {"process": name, "alive": len(matches) > 0, "matches": matches}
-        click.echo(json.dumps(result, ensure_ascii=False))
+        if brief:
+            for m in matches:
+                click.echo(m["pid"])
+        else:
+            result = {"process": name, "alive": len(matches) > 0, "matches": matches}
+            click.echo(json.dumps(result, ensure_ascii=False))
     else:
         # Check by PID
         kernel32 = ctypes.windll.kernel32
@@ -534,8 +559,58 @@ def ui_alive(pid, process):
         else:
             alive = False
 
-        result = {"pid": pid, "alive": alive}
-        click.echo(json.dumps(result, ensure_ascii=False))
+        if brief:
+            if alive:
+                click.echo(pid)
+        else:
+            result = {"pid": pid, "alive": alive}
+            click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("close")
+@click.option("--pid", required=True, type=int, help="PID of the process to close")
+def ui_close(pid):
+    """Gracefully close a process launched by wpf-agent.
+
+    Only processes started via `wpf-agent launch` can be closed.
+    Sends WM_CLOSE to the main window (does not force-kill).
+    """
+    import ctypes
+
+    from wpf_agent.core.target import is_launched_pid, remove_launched_pid
+
+    if not is_launched_pid(pid):
+        click.echo(
+            json.dumps({"closed": False, "error": "PID was not launched by wpf-agent"}, ensure_ascii=False)
+        )
+        sys.exit(1)
+
+    # Find the main window for this PID and send WM_CLOSE
+    user32 = ctypes.windll.user32
+    WM_CLOSE = 0x0010
+    WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.POINTER(ctypes.c_int))
+
+    closed_hwnds = []
+
+    def _cb(hwnd, _lparam):
+        win_pid = ctypes.c_ulong()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(win_pid))
+        if win_pid.value == pid and user32.IsWindowVisible(hwnd):
+            # Check it has a title (main window, not helper)
+            length = user32.GetWindowTextLengthW(hwnd)
+            if length > 0:
+                user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
+                closed_hwnds.append(hwnd)
+        return True
+
+    user32.EnumWindows(WNDENUMPROC(_cb), 0)
+
+    if closed_hwnds:
+        remove_launched_pid(pid)
+        click.echo(json.dumps({"closed": True, "pid": pid, "windows": len(closed_hwnds)}, ensure_ascii=False))
+    else:
+        click.echo(json.dumps({"closed": False, "pid": pid, "error": "No visible window found"}, ensure_ascii=False))
+        sys.exit(1)
 
 
 # ── scenario ──────────────────────────────────────────────────────

@@ -98,6 +98,93 @@ def _capture_with_print_window(hwnd: int) -> Image.Image | None:
         user32.ReleaseDC(hwnd, hwnd_dc)
 
 
+def _enum_process_windows(pid: int) -> list[int]:
+    """Return visible window handles belonging to *pid* using Win32 EnumWindows.
+
+    pywinauto Desktop.windows() misses WPF popup HWNDs (ComboBox dropdowns,
+    context menus, tooltips) because they lack UIA top-level window properties.
+    Win32 EnumWindows catches them all.
+    """
+    user32 = ctypes.windll.user32
+    WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.POINTER(ctypes.c_int))
+
+    hwnds: list[int] = []
+
+    def _cb(hwnd: int, _lparam: Any) -> bool:
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        win_pid = ctypes.c_ulong()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(win_pid))
+        if win_pid.value == pid:
+            # Skip zero-area windows (hidden helper windows)
+            class RECT(ctypes.Structure):
+                _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                             ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+            r = RECT()
+            user32.GetWindowRect(hwnd, ctypes.byref(r))
+            if (r.right - r.left) > 0 and (r.bottom - r.top) > 0:
+                hwnds.append(hwnd)
+        return True
+
+    user32.EnumWindows(WNDENUMPROC(_cb), 0)
+    return hwnds
+
+
+def _composite_process_windows(
+    hwnds: list[int], main_hwnd: int
+) -> Image.Image | None:
+    """Composite all visible windows of a process into a single image.
+
+    Captures each window via PrintWindow and pastes them onto a canvas
+    based on screen coordinates. The main window is drawn first, then
+    popups on top (matching visual Z-order).
+    """
+    user32 = ctypes.windll.user32
+
+    class RECT(ctypes.Structure):
+        _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                     ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+    # Collect rects for each handle
+    win_info: list[tuple[int, tuple[int, int, int, int]]] = []
+    for h in hwnds:
+        rect = RECT()
+        user32.GetWindowRect(h, ctypes.byref(rect))
+        r = (rect.left, rect.top, rect.right, rect.bottom)
+        if r[2] - r[0] <= 0 or r[3] - r[1] <= 0:
+            continue
+        win_info.append((h, r))
+
+    if not win_info:
+        return None
+
+    # Compute union bounding rect
+    union_l = min(r[0] for _, r in win_info)
+    union_t = min(r[1] for _, r in win_info)
+    union_r = max(r[2] for _, r in win_info)
+    union_b = max(r[3] for _, r in win_info)
+    canvas_w = union_r - union_l
+    canvas_h = union_b - union_t
+    if canvas_w <= 0 or canvas_h <= 0:
+        return None
+
+    canvas = Image.new("RGB", (canvas_w, canvas_h), (0, 0, 0))
+
+    # Separate main window and popups; draw main first, popups on top
+    main_items = [(h, r) for h, r in win_info if h == main_hwnd]
+    popup_items = [(h, r) for h, r in win_info if h != main_hwnd]
+
+    for hwnd, r in main_items + popup_items:
+        cap = _capture_with_print_window(hwnd)
+        if cap is None:
+            continue
+        x = r[0] - union_l
+        y = r[1] - union_t
+        canvas.paste(cap, (x, y))
+
+    return canvas
+
+
 def capture_screenshot(
     target: ResolvedTarget | None = None,
     region: dict[str, int] | None = None,
@@ -106,7 +193,10 @@ def capture_screenshot(
     """Capture a screenshot, optionally scoped to a window or region.
 
     For target windows, uses PrintWindow+PW_RENDERFULLCONTENT to handle
-    WPF hardware-accelerated rendering. Falls back to ImageGrab if needed.
+    WPF hardware-accelerated rendering. When popup windows (context menus,
+    combo dropdowns, tooltips) belonging to the same process are detected,
+    all windows are composited into a single image.
+    Falls back to ImageGrab if needed.
     """
     img = None
 
@@ -114,10 +204,21 @@ def capture_screenshot(
         # Try PrintWindow first (handles WPF DirectX rendering)
         try:
             from wpf_agent.uia.engine import _top_window
+
             win = _top_window(target)
-            hwnd = win.handle
-            if hwnd:
-                img = _capture_with_print_window(hwnd)
+            main_hwnd = win.handle
+
+            # Find all visible windows for this PID via Win32 EnumWindows
+            # (pywinauto Desktop.windows() misses WPF popup HWNDs)
+            popup_hwnds = _enum_process_windows(target.pid)
+
+            if len(popup_hwnds) <= 1:
+                # No popups — capture main window only (original path)
+                if main_hwnd:
+                    img = _capture_with_print_window(main_hwnd)
+            else:
+                # Popups detected — composite all windows
+                img = _composite_process_windows(popup_hwnds, main_hwnd)
         except Exception:
             pass
 

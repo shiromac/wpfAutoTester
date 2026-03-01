@@ -101,6 +101,17 @@ wpf-agent scenario run --file scenarios/demo_a_settings.yaml --profile MyApp
 wpf-agent random run --profile MyApp --max-steps 200 --seed 42
 ```
 
+### Usability Testing (Persona-Based)
+
+Run a think-aloud usability test with a simulated persona:
+
+```
+/wpf-usability-test --pid 12345 --goal "Set the counter to 5"
+/wpf-usability-test --exe path/to/App.exe --goal "Save settings" --persona "College student, tech-savvy, impatient"
+```
+
+Claude assumes a persona (default: office worker, moderate IT literacy) and narrates thoughts while trying to achieve the goal. Generates a usability report with issues, severity ratings, and improvement suggestions.
+
 ### Replay (AI-free)
 
 ```bash
@@ -143,19 +154,21 @@ wpf-agent ui focus --pid <pid>                          # Focus window
 wpf-agent ui click --pid <pid> --aid <id>               # Click element
 wpf-agent ui type --pid <pid> --aid <id> --text "..."   # Type text
 wpf-agent ui toggle --pid <pid> --aid <id>              # Toggle checkbox
+wpf-agent ui close --pid <pid>                          # Graceful close (launch-started only)
 ```
 
 ### Read-Only Commands (always available, even when paused)
 
 ```bash
-wpf-agent ui screenshot --pid <pid> [--save <path>]     # Take screenshot
+wpf-agent ui windows [--brief]                          # List top-level windows (PID, title)
+wpf-agent ui alive --process MyApp [--brief]            # Find process + get PID
+wpf-agent ui alive --pid <pid>                          # Check if process is running
+wpf-agent ui screenshot --pid <pid> [--save <path>]     # Take screenshot (auto-composites popups)
 wpf-agent ui controls --pid <pid> [--depth N]            # List all controls (JSON)
 wpf-agent ui controls --pid <pid> --has-aid --brief      # Only controls with automation_id (table)
 wpf-agent ui controls --pid <pid> --type-filter Button,Edit,ComboBox --brief
 wpf-agent ui read --pid <pid> --aid <id>                 # Read text
 wpf-agent ui state --pid <pid> --aid <id>                # Get state
-wpf-agent ui alive --pid <pid>                           # Check if process is running
-wpf-agent ui alive --process MyApp                       # Find process by name
 ```
 
 `ui controls` filter options:
@@ -181,7 +194,7 @@ Selectors: `--aid`, `--name`, `--control-type` (`--aid` recommended).
 
 ## UI Guard (Mouse Movement Detection)
 
-Action commands (`focus`, `click`, `type`, `toggle`) sample mouse position for 200ms before execution. If user mouse movement (>5px) is detected, the operation is aborted and a persistent pause is set.
+Action commands (`focus`, `click`, `type`, `toggle`) sample mouse position for 50ms before execution. If user mouse movement (>2px) is detected, the operation is aborted and a persistent pause is set.
 
 - Interrupted: exit code 2 + JSON output with reason
 - Read-only commands remain available during pause
@@ -223,6 +236,7 @@ wpf-agent install-skills --github
 | `/wpf-setup` | Setup and register MCP server |
 | `/wpf-inspect` | Inspect UI (windows + controls + screenshot) |
 | `/wpf-explore` | AI-guided exploration testing |
+| `/wpf-usability-test` | Persona-based usability testing (think-aloud + goal-oriented) |
 | `/wpf-verify` | Build & auto-verify (launch, smoke test, UI check, report) |
 | `/wpf-click` | Click element + verify |
 | `/wpf-type` | Type text + verify |
