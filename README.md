@@ -154,6 +154,8 @@ wpf-agent ui controls --pid <pid> --has-aid --brief      # Only controls with au
 wpf-agent ui controls --pid <pid> --type-filter Button,Edit,ComboBox --brief
 wpf-agent ui read --pid <pid> --aid <id>                 # Read text
 wpf-agent ui state --pid <pid> --aid <id>                # Get state
+wpf-agent ui alive --pid <pid>                           # Check if process is running
+wpf-agent ui alive --process MyApp                       # Find process by name
 ```
 
 `ui controls` filter options:

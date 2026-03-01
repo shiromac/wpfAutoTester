@@ -83,6 +83,8 @@ wpf-agent ui screenshot --pid <pid> [--save <path>]      # スクショ撮影
 wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--has-aid] [--brief]  # コントロール一覧
 wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
 wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
+wpf-agent ui alive --pid <pid>                            # プロセス生存確認 (PID)
+wpf-agent ui alive --process <name>                       # プロセス生存確認 (プロセス名)
 ```
 
 #### ガード管理コマンド

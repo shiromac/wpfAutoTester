@@ -492,6 +492,52 @@ def ui_status():
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
+@ui_cmd.command("alive")
+@click.option("--pid", default=None, type=int, help="Process ID to check")
+@click.option("--process", default=None, help="Process name to find (e.g. MyApp or MyApp.exe)")
+def ui_alive(pid, process):
+    """Check if a process is running (by PID or process name)."""
+    import ctypes
+
+    if not pid and not process:
+        click.echo("Specify --pid or --process", err=True)
+        sys.exit(1)
+
+    if process:
+        # Search by process name
+        import subprocess
+
+        name = process if process.lower().endswith(".exe") else process + ".exe"
+        proc = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {name}", "/FO", "CSV", "/NH"],
+            capture_output=True, text=True,
+        )
+        matches = []
+        for line in proc.stdout.strip().split("\n"):
+            parts = line.strip().strip('"').split('","')
+            if len(parts) >= 2 and parts[0].lower() == name.lower():
+                matches.append({"pid": int(parts[1]), "process": parts[0]})
+
+        result = {"process": name, "alive": len(matches) > 0, "matches": matches}
+        click.echo(json.dumps(result, ensure_ascii=False))
+    else:
+        # Check by PID
+        kernel32 = ctypes.windll.kernel32
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if handle:
+            exit_code = ctypes.c_ulong()
+            kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+            kernel32.CloseHandle(handle)
+            STILL_ACTIVE = 259
+            alive = exit_code.value == STILL_ACTIVE
+        else:
+            alive = False
+
+        result = {"pid": pid, "alive": alive}
+        click.echo(json.dumps(result, ensure_ascii=False))
+
+
 # ── scenario ──────────────────────────────────────────────────────
 
 @main.group()

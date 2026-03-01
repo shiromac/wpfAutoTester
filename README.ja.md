@@ -160,6 +160,8 @@ wpf-agent ui controls --pid <pid> --has-aid --brief      # automation_id 付き�
 wpf-agent ui controls --pid <pid> --type-filter Button,Edit,ComboBox --brief
 wpf-agent ui read --pid <pid> --aid <id>                 # テキスト読取
 wpf-agent ui state --pid <pid> --aid <id>                # 状態取得
+wpf-agent ui alive --pid <pid>                           # プロセス生存確認 (PID)
+wpf-agent ui alive --process MyApp                       # プロセス名で検索
 ```
 
 `ui controls` フィルタオプション:
