@@ -1,7 +1,7 @@
 ---
 name: wpf-usability-test
 description: ペルソナ型ユーザビリティテスト（思考発話法 + ゴール指向）
-argument-hint: --pid <PID> --goal "目的" [--persona "ペルソナ説明"]
+argument-hint: --pid <PID> --goal "目的" [--persona <name_or_text>]
 ---
 
 WPF アプリのユーザビリティテストを実行してください。
@@ -16,16 +16,19 @@ Claude Code 自身がペルソナになりきり、`wpf-agent ui` コマンド�
 以下の引数を解析する:
 - `--pid <PID>` or `--exe <path>`: 対象アプリ（必須）
 - `--goal "目的"`: ユーザーの目的（必須）
-- `--persona "ペルソナ説明"`: ペルソナ説明（省略時はデフォルトペルソナ使用）
+- `--persona <name_or_text>`: プリセット名 or インラインテキスト（省略時は "tanaka"）
 
-## デフォルトペルソナ
+## ペルソナの解決
 
-`--persona` 省略時は以下を使用:
+`--persona` の値を以下の順で解決する:
 
-```
-田中美咲（35歳）、事務職、ITリテラシー中程度（Word/Excelは日常使用）、
-慎重で説明をよく読む、エラーが出ると不安になる
-```
+1. **プリセット名として検索**: `wpf-agent personas list` の名前と一致するか確認
+   - 一致すれば、そのプリセットの description を使用
+   ```bash
+   wpf-agent personas list
+   ```
+2. **インラインテキスト**: プリセット名に一致しなければ、指定テキストをそのままペルソナ説明として使用
+3. **省略時のデフォルト**: `--persona` 未指定時は プリセット "tanaka" を使用
 
 ## 準備
 

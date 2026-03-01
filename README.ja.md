@@ -110,10 +110,13 @@ wpf-agent random run --profile MyApp --max-steps 200 --seed 42
 
 ```
 /wpf-usability-test --pid 12345 --goal "カウンターを5にする"
+/wpf-usability-test --pid 12345 --goal "設定を保存する" --persona suzuki
 /wpf-usability-test --exe path/to/App.exe --goal "設定を保存する" --persona "大学生、ITに強い、せっかち"
 ```
 
-Claude がペルソナ（デフォルト: 事務職、ITリテラシー中程度）になりきって思考を口に出しながらゴール達成を試みます。問題点・重大度・改善提案を含むユーザビリティ報告書を生成します。
+`--persona` にはプリセット名（`tanaka`, `suzuki`, `sato` 等）またはインラインテキストを指定できます。省略時は `tanaka` がデフォルト。
+
+Claude がペルソナになりきって思考を口に出しながらゴール達成を試みます。問題点・重大度・改善提案を含むユーザビリティ報告書を生成します。
 
 ### リプレイ（AI 不要）
 
@@ -282,6 +285,36 @@ wpf-agent install-skills --github
 ]
 ```
 
+## ペルソナプリセット
+
+`personas.json` にユーザビリティテスト用のペルソナプリセットを定義:
+
+```json
+[
+  {
+    "name": "tanaka",
+    "description": "田中美咲（35歳）、事務職、ITリテラシー中程度（Word/Excelは日常使用）、慎重で説明をよく読む、エラーが出ると不安になる"
+  },
+  {
+    "name": "suzuki",
+    "description": "鈴木健一（62歳）、定年退職後の再雇用、ITリテラシー低（スマホは使うがPCは苦手）、文字が小さいと読みづらい、ゆっくり操作する"
+  },
+  {
+    "name": "sato",
+    "description": "佐藤翔太（22歳）、新卒エンジニア、ITリテラシー高、せっかちで説明を読まずにクリックする、エラーが出ても動じない"
+  }
+]
+```
+
+CLI でプリセットを管理:
+
+```bash
+wpf-agent personas list
+wpf-agent personas add --name yamada --description "山田太郎（45歳）、管理職、ITリテラシー中程度"
+wpf-agent personas edit yamada --description "山田太郎（45歳）、上級管理職、ITリテラシー高"
+wpf-agent personas remove yamada
+```
+
 ## シナリオ定義（YAML）
 
 ```yaml
@@ -329,6 +362,8 @@ scenarios/    # YAML シナリオ定義
 artifacts/    # セッションとチケット (実行時生成)
 tests/        # ユニットテスト
 testApp/      # WPF テスト用サンプルアプリ (.NET 9)
+profiles.json # 対象アプリ定義
+personas.json # ペルソナプリセット定義
 ```
 
 ## 実行ファイルのビルド

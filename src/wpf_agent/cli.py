@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
+import time
 
 import click
 
@@ -23,12 +24,16 @@ def main():
 @main.command()
 def init():
     """Initialize project: create profiles.json template and directories."""
-    from wpf_agent.config import ProfileStore
+    from wpf_agent.config import PersonaStore, ProfileStore
     from wpf_agent.constants import SESSION_DIR, TICKET_DIR
 
     store = ProfileStore()
     store.ensure_default()
     click.echo(f"Created {store.path}")
+
+    persona_store = PersonaStore()
+    persona_store.ensure_default()
+    click.echo(f"Created {persona_store.path}")
 
     for d in [SESSION_DIR, TICKET_DIR]:
         pathlib.Path(d).mkdir(parents=True, exist_ok=True)
@@ -193,6 +198,62 @@ def profiles_edit(name, process, title_re, exe, pid):
         profile.match.pid = pid
     store.update(profile)
     click.echo(f"Updated profile '{name}'")
+
+
+# ── personas ──────────────────────────────────────────────────────
+
+@main.group()
+def personas():
+    """Manage usability-test persona presets."""
+    pass
+
+
+@personas.command("list")
+def personas_list():
+    """List all persona presets."""
+    from wpf_agent.config import PersonaStore
+    store = PersonaStore()
+    for p in store.list():
+        click.echo(f"  {p.name}: {p.description}")
+
+
+@personas.command("add")
+@click.option("--name", required=True, help="Persona preset name")
+@click.option("--description", required=True, help="Persona description text")
+def personas_add(name, description):
+    """Add a new persona preset."""
+    from wpf_agent.config import Persona, PersonaStore
+    store = PersonaStore()
+    store.add(Persona(name=name, description=description))
+    click.echo(f"Added persona '{name}'")
+
+
+@personas.command("remove")
+@click.argument("name")
+def personas_remove(name):
+    """Remove a persona preset."""
+    from wpf_agent.config import PersonaStore
+    store = PersonaStore()
+    if store.remove(name):
+        click.echo(f"Removed persona '{name}'")
+    else:
+        click.echo(f"Persona '{name}' not found", err=True)
+
+
+@personas.command("edit")
+@click.argument("name")
+@click.option("--description", required=True, help="New persona description text")
+def personas_edit(name, description):
+    """Edit an existing persona preset's description."""
+    from wpf_agent.config import PersonaStore
+    store = PersonaStore()
+    persona = store.get(name)
+    if persona is None:
+        click.echo(f"Persona '{name}' not found", err=True)
+        return
+    persona.description = description
+    store.update(persona)
+    click.echo(f"Updated persona '{name}'")
 
 
 # ── run / attach / launch ────────────────────────────────────────
@@ -436,6 +497,25 @@ def ui_toggle(ctx, pid, title_re, aid, name, control_type, state):
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
+@ui_cmd.command("select-combo")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID")
+@click.option("--name", default=None, help="Element name")
+@click.option("--control-type", default=None, help="Control type")
+@click.option("--item", required=True, help="Item text to select")
+@click.pass_context
+def ui_select_combo(ctx, pid, title_re, aid, name, control_type, item):
+    """Select an item from a ComboBox."""
+    _run_guard(ctx, "select-combo")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type)
+    result = UIAEngine.select_combo(target, selector, item)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
 @ui_cmd.command("read")
 @click.option("--pid", default=None, type=int, help="Target process ID")
 @click.option("--title-re", default=None, help="Window title regex")
@@ -611,6 +691,25 @@ def ui_close(pid):
     else:
         click.echo(json.dumps({"closed": False, "pid": pid, "error": "No visible window found"}, ensure_ascii=False))
         sys.exit(1)
+
+
+@ui_cmd.command("init-session")
+@click.option("--prefix", default="session", help="Session directory prefix (e.g. usability, explore)")
+def ui_init_session(prefix):
+    """Create a timestamped session workspace under artifacts/sessions/.
+
+    Returns the created directory path as JSON.
+    Example: wpf-agent ui init-session --prefix usability
+    → artifacts/sessions/usability_20260301_153045/
+    """
+    import pathlib as _pl
+
+    from wpf_agent.constants import SESSION_DIR
+
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    session_dir = _pl.Path(SESSION_DIR) / f"{prefix}_{timestamp}"
+    session_dir.mkdir(parents=True, exist_ok=True)
+    click.echo(json.dumps({"path": str(session_dir)}, ensure_ascii=False))
 
 
 # ── scenario ──────────────────────────────────────────────────────

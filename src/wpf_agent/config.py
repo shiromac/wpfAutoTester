@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from wpf_agent.constants import DEFAULT_TIMEOUT_MS, PROFILES_FILE
+from wpf_agent.constants import DEFAULT_TIMEOUT_MS, PERSONAS_FILE, PROFILES_FILE
 
 
 class SafetyConfig(BaseModel):
@@ -105,3 +105,77 @@ class ProfileStore:
                 safety=SafetyConfig(),
             )
             self._save_raw([default.model_dump(exclude_none=True)])
+
+
+class Persona(BaseModel):
+    name: str
+    description: str  # e.g. "田中美咲（35歳）、事務職、..."
+
+
+class PersonaStore:
+    """Manages personas.json read/write."""
+
+    def __init__(self, path: str | pathlib.Path | None = None):
+        self.path = pathlib.Path(path or PERSONAS_FILE)
+
+    def _load_raw(self) -> list[dict[str, Any]]:
+        if not self.path.exists():
+            return []
+        return json.loads(self.path.read_text(encoding="utf-8"))
+
+    def _save_raw(self, data: list[dict[str, Any]]) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+
+    def list(self) -> list[Persona]:
+        return [Persona(**d) for d in self._load_raw()]
+
+    def get(self, name: str) -> Persona | None:
+        for d in self._load_raw():
+            if d.get("name") == name:
+                return Persona(**d)
+        return None
+
+    def add(self, persona: Persona) -> None:
+        data = self._load_raw()
+        if any(d.get("name") == persona.name for d in data):
+            raise ValueError(f"Persona '{persona.name}' already exists")
+        data.append(persona.model_dump())
+        self._save_raw(data)
+
+    def remove(self, name: str) -> bool:
+        data = self._load_raw()
+        new = [d for d in data if d.get("name") != name]
+        if len(new) == len(data):
+            return False
+        self._save_raw(new)
+        return True
+
+    def update(self, persona: Persona) -> None:
+        data = self._load_raw()
+        for i, d in enumerate(data):
+            if d.get("name") == persona.name:
+                data[i] = persona.model_dump()
+                self._save_raw(data)
+                return
+        raise ValueError(f"Persona '{persona.name}' not found")
+
+    def ensure_default(self) -> None:
+        if not self.path.exists():
+            defaults = [
+                Persona(
+                    name="tanaka",
+                    description="田中美咲（35歳）、事務職、ITリテラシー中程度（Word/Excelは日常使用）、慎重で説明をよく読む、エラーが出ると不安になる",
+                ),
+                Persona(
+                    name="suzuki",
+                    description="鈴木健一（62歳）、定年退職後の再雇用、ITリテラシー低（スマホは使うがPCは苦手）、文字が小さいと読みづらい、ゆっくり操作する",
+                ),
+                Persona(
+                    name="sato",
+                    description="佐藤翔太（22歳）、新卒エンジニア、ITリテラシー高、せっかちで説明を読まずにクリックする、エラーが出ても動じない",
+                ),
+            ]
+            self._save_raw([p.model_dump() for p in defaults])

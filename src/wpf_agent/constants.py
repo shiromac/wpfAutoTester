@@ -41,6 +41,7 @@ DEFAULT_LOG_TAIL = 20
 SESSION_DIR = str(PROJECT_ROOT / "artifacts" / "sessions")
 TICKET_DIR = str(PROJECT_ROOT / "artifacts" / "tickets")
 PROFILES_FILE = str(PROJECT_ROOT / "profiles.json")
+PERSONAS_FILE = str(PROJECT_ROOT / "personas.json")
 MAX_CONTROLS = 500
 SCREENSHOT_FORMAT = "png"
 

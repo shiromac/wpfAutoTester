@@ -107,10 +107,13 @@ Run a think-aloud usability test with a simulated persona:
 
 ```
 /wpf-usability-test --pid 12345 --goal "Set the counter to 5"
+/wpf-usability-test --pid 12345 --goal "Save settings" --persona suzuki
 /wpf-usability-test --exe path/to/App.exe --goal "Save settings" --persona "College student, tech-savvy, impatient"
 ```
 
-Claude assumes a persona (default: office worker, moderate IT literacy) and narrates thoughts while trying to achieve the goal. Generates a usability report with issues, severity ratings, and improvement suggestions.
+`--persona` accepts a preset name (e.g., `tanaka`, `suzuki`, `sato`) or inline text. Defaults to `tanaka` if omitted.
+
+Claude assumes the persona and narrates thoughts while trying to achieve the goal. Generates a usability report with issues, severity ratings, and improvement suggestions.
 
 ### Replay (AI-free)
 
@@ -263,6 +266,36 @@ Edit `profiles.json`:
 ]
 ```
 
+## Persona Presets
+
+`personas.json` defines reusable persona presets for usability testing:
+
+```json
+[
+  {
+    "name": "tanaka",
+    "description": "Tanaka Misaki (35), office worker, moderate IT literacy, cautious, reads instructions carefully"
+  },
+  {
+    "name": "suzuki",
+    "description": "Suzuki Kenichi (62), retiree, low IT literacy, prefers large text, operates slowly"
+  },
+  {
+    "name": "sato",
+    "description": "Sato Shota (22), junior engineer, high IT literacy, impatient, clicks without reading"
+  }
+]
+```
+
+Manage presets via CLI:
+
+```bash
+wpf-agent personas list
+wpf-agent personas add --name yamada --description "Yamada (45), manager, moderate IT skills"
+wpf-agent personas edit yamada --description "Yamada (45), senior manager, high IT skills"
+wpf-agent personas remove yamada
+```
+
 ## Project Structure
 
 ```
@@ -277,6 +310,8 @@ scenarios/    # YAML scenario definitions
 artifacts/    # sessions and tickets (generated)
 tests/        # unit tests
 testApp/      # Sample WPF app (.NET 9) for testing
+profiles.json # target app definitions
+personas.json # persona presets for usability testing
 ```
 
 ## Building Executable

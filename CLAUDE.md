@@ -51,6 +51,7 @@ wpf-agent init                           # 初期化
 wpf-agent install-skills                 # Claude Code スキルインストール
 wpf-agent install-skills --github        # .github/skills/ にもコピー (Copilot Coding Agent用)
 wpf-agent profiles list/add/edit/remove  # プロファイル管理
+wpf-agent personas list/add/edit/remove  # ペルソナプリセット管理
 wpf-agent run --profile <name>           # エージェントループ
 wpf-agent attach --pid <pid>             # PID接続
 wpf-agent launch --exe <path>            # 起動接続
@@ -75,6 +76,7 @@ wpf-agent ui focus --pid <pid>                           # ウィンドウフォ
 wpf-agent ui click --pid <pid> --aid <id>                # クリック
 wpf-agent ui type --pid <pid> --aid <id> --text "..."    # テキスト入力
 wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
+wpf-agent ui select-combo --pid <pid> --aid <id> --item "text"  # コンボボックス選択
 wpf-agent ui close --pid <pid>                           # WM_CLOSE で終了 (launch 起動のみ)
 ```
 
@@ -87,6 +89,7 @@ wpf-agent ui screenshot --pid <pid> [--save <path>]       # スクショ撮影 (
 wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--has-aid] [--brief]  # コントロール一覧
 wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
 wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
+wpf-agent ui init-session --prefix <name>                  # セッション用ワークスペース作成 (タイムスタンプ付き)
 ```
 
 #### ガード管理コマンド
@@ -141,7 +144,7 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 src/wpf_agent/
 ├── __init__.py, __main__.py   # パッケージ・エントリポイント
 ├── cli.py                     # Click ベース CLI (全コマンド定義)
-├── config.py                  # ProfileStore / Profile / ProfileMatch 等
+├── config.py                  # ProfileStore / PersonaStore / Profile / Persona 等
 ├── constants.py               # グローバル定数 + ガード定数
 ├── ui_guard.py                # マウス移動検知ガード
 ├── core/
@@ -181,6 +184,7 @@ artifacts/sessions/            # セッションログ (実行時生成)
 artifacts/tickets/             # チケット (実行時生成)
 tests/                         # ユニットテスト
 profiles.json                  # 対象アプリ定義
+personas.json                  # ペルソナプリセット定義
 ```
 
 ## 開発
