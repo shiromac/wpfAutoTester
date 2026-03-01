@@ -324,13 +324,45 @@ def ui_screenshot(pid, title_re, save_path):
 @click.option("--pid", default=None, type=int, help="Target process ID")
 @click.option("--title-re", default=None, help="Window title regex")
 @click.option("--depth", default=4, type=int, help="Traversal depth")
-def ui_controls(pid, title_re, depth):
-    """List UI controls as JSON."""
+@click.option("--type-filter", default=None, help="Filter by control_type (comma-separated, e.g. Button,Edit,ComboBox)")
+@click.option("--name-filter", default=None, help="Filter by name (substring match, case-insensitive)")
+@click.option("--has-name", is_flag=True, default=False, help="Only show controls with non-empty name")
+@click.option("--has-aid", is_flag=True, default=False, help="Only show controls with non-empty automation_id")
+@click.option("--brief", is_flag=True, default=False, help="Compact table output instead of JSON")
+def ui_controls(pid, title_re, depth, type_filter, name_filter, has_name, has_aid, brief):
+    """List UI controls as JSON (or brief table with --brief)."""
+    import re
+
     from wpf_agent.uia.engine import UIAEngine
 
     target = _resolve_ui_target(pid, title_re)
     controls = UIAEngine.list_controls(target, depth=depth)
-    click.echo(json.dumps(controls, ensure_ascii=False, indent=2))
+
+    # Apply filters
+    if type_filter:
+        allowed_types = {t.strip() for t in type_filter.split(",")}
+        controls = [c for c in controls if c.get("control_type", "") in allowed_types]
+
+    if name_filter:
+        pattern = re.compile(re.escape(name_filter), re.IGNORECASE)
+        controls = [c for c in controls if pattern.search(c.get("name", ""))]
+
+    if has_name:
+        controls = [c for c in controls if c.get("name", "").strip()]
+
+    if has_aid:
+        controls = [c for c in controls if c.get("automation_id", "").strip()]
+
+    if brief:
+        for c in controls:
+            ct = c.get("control_type", "")
+            aid = c.get("automation_id", "")
+            name = c.get("name", "")
+            r = c.get("rect", {})
+            rect_str = f"({r.get('left', 0)},{r.get('top', 0)},{r.get('right', 0)},{r.get('bottom', 0)})"
+            click.echo(f"{ct:20s} aid={aid:25s} name={name:35s} rect={rect_str}")
+    else:
+        click.echo(json.dumps(controls, ensure_ascii=False, indent=2))
 
 
 @ui_cmd.command("focus")

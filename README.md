@@ -150,6 +150,7 @@ wpf-agent ui toggle --pid <pid> --aid <id>              # Toggle checkbox
 ```bash
 wpf-agent ui screenshot --pid <pid> [--save <path>]    # Take screenshot
 wpf-agent ui controls --pid <pid> [--depth N]           # List controls (JSON)
+# Filter options: --type-filter Button,Edit --has-name --has-aid --brief
 wpf-agent ui read --pid <pid> --aid <id>                # Read text
 wpf-agent ui state --pid <pid> --aid <id>               # Get state
 ```

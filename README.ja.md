@@ -156,6 +156,7 @@ wpf-agent ui toggle --pid <pid> --aid <id>              # トグル
 ```bash
 wpf-agent ui screenshot --pid <pid> [--save <path>]    # スクショ撮影
 wpf-agent ui controls --pid <pid> [--depth N]           # コントロール一覧 (JSON)
+# フィルタ: --type-filter Button,Edit --has-name --has-aid --brief
 wpf-agent ui read --pid <pid> --aid <id>                # テキスト読取
 wpf-agent ui state --pid <pid> --aid <id>               # 状態取得
 ```

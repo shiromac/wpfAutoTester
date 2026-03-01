@@ -35,9 +35,15 @@ Read ツールで画像ファイルを読み込み、画面の状態を視覚的
 
 #### c. コントロール一覧取得
 ```bash
+# 全コントロール (JSON)
 wpf-agent ui controls --pid <pid> --depth 4
+
+# フィルタ付き (1行で完結、python パイプ不要)
+wpf-agent ui controls --pid <pid> --depth 4 --has-aid --brief
+wpf-agent ui controls --pid <pid> --depth 6 --type-filter ListItem,TreeItem,DataItem --brief
+wpf-agent ui controls --pid <pid> --depth 4 --type-filter Button,Edit,ComboBox --has-name --brief
 ```
-JSON 出力から automation_id, name, control_type, enabled, visible を確認。
+フィルタオプション: `--type-filter` (カンマ区切り), `--name-filter` (部分一致), `--has-name`, `--has-aid`, `--brief` (テーブル出力)。
 
 #### d. 次の操作を判断
 - まだ触っていないボタン、メニュー、タブを優先

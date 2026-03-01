@@ -80,7 +80,7 @@ wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
 #### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
 ```
 wpf-agent ui screenshot --pid <pid> [--save <path>]      # スクショ撮影
-wpf-agent ui controls --pid <pid> [--depth N]             # コントロール一覧 (JSON)
+wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--has-aid] [--brief]  # コントロール一覧
 wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
 wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
 ```
