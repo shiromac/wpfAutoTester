@@ -24,7 +24,7 @@ Or for development:
 
 ```bash
 git clone https://github.com/shiromac/wpfAutoTester.git
-cd wpf-agent
+cd wpfAutoTester
 pip install -e .[dev]
 ```
 
