@@ -163,7 +163,7 @@ wpf-agent ui focus --pid <pid>                          # ウィンドウフォ�
 wpf-agent ui click --pid <pid> --aid <id>               # クリック
 wpf-agent ui type --pid <pid> --aid <id> --text "..."   # テキスト入力
 wpf-agent ui toggle --pid <pid> --aid <id>              # トグル
-wpf-agent ui close --pid <pid>                          # WM_CLOSE で終了 (launch 起動のみ)
+wpf-agent ui close --pid <pid>                          # WM_CLOSE で終了 (wpf-agent 起動プロセスのみ)
 ```
 
 ### 読み取り系コマンド（一時停止中も使用可）

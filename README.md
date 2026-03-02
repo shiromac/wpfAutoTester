@@ -157,7 +157,7 @@ wpf-agent ui focus --pid <pid>                          # Focus window
 wpf-agent ui click --pid <pid> --aid <id>               # Click element
 wpf-agent ui type --pid <pid> --aid <id> --text "..."   # Type text
 wpf-agent ui toggle --pid <pid> --aid <id>              # Toggle checkbox
-wpf-agent ui close --pid <pid>                          # Graceful close (launch-started only)
+wpf-agent ui close --pid <pid>                          # Graceful close (wpf-agent-started only)
 ```
 
 ### Read-Only Commands (always available, even when paused)

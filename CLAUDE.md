@@ -55,6 +55,7 @@ wpf-agent personas list/add/edit/remove  # ペルソナプリセット管理
 wpf-agent run --profile <name>           # エージェントループ
 wpf-agent attach --pid <pid>             # PID接続
 wpf-agent launch --exe <path>            # 起動接続
+wpf-agent close --pid <pid>             # 起動したプロセスを終了
 wpf-agent scenario run --file <yaml>     # シナリオテスト
 wpf-agent random run --profile <name>    # ランダムテスト
 wpf-agent explore run --profile <name>   # AI誘導型探索テスト
@@ -77,7 +78,7 @@ wpf-agent ui click --pid <pid> --aid <id>                # クリック
 wpf-agent ui type --pid <pid> --aid <id> --text "..."    # テキスト入力
 wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
 wpf-agent ui select-combo --pid <pid> --aid <id> --item "text"  # コンボボックス選択
-wpf-agent ui close --pid <pid>                           # WM_CLOSE で終了 (launch 起動のみ)
+wpf-agent ui close --pid <pid>                           # WM_CLOSE で終了 (wpf-agent 起動プロセスのみ)
 ```
 
 #### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
@@ -123,7 +124,7 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 **注意**: タイムスタンプの取得には `init-session` を使うこと。`pwsh` や `date` コマンドで時刻を取得する必要はない。
 
 ### UI ガード (マウス移動検知)
-操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 50ms サンプリングし、ユーザーのマウス移動 (>2px) を検出すると操作を中断する。中断後は pause ファイル (`~/.wpf-agent/pause`) で持続的にブロックされる。`close` はガード対象外（launch 起動プロセス限定で安全なため）。
+操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 50ms サンプリングし、ユーザーのマウス移動 (>2px) を検出すると操作を中断する。中断後は pause ファイル (`~/.wpf-agent/pause`) で持続的にブロックされる。`close` はガード対象外（wpf-agent 起動プロセス限定で安全なため）。
 
 - 中断時: exit code 2 + `{"interrupted": true, "reason": "...", ...}` を JSON 出力
 - 実装: `src/wpf_agent/ui_guard.py` (check_guard, is_paused, set_paused, clear_pause)

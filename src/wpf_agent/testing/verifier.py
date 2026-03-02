@@ -14,7 +14,12 @@ import yaml
 
 from wpf_agent.core.errors import SelectorNotFoundError, TargetNotFoundError
 from wpf_agent.core.session import Session
-from wpf_agent.core.target import ResolvedTarget, TargetRegistry
+from wpf_agent.core.target import (
+    ResolvedTarget,
+    TargetRegistry,
+    record_launched_pid,
+    remove_launched_pid,
+)
 from wpf_agent.runner.logging import StepLogger
 from wpf_agent.testing.assertions import AssertionResult, check_assertion
 from wpf_agent.testing.oracles import (
@@ -80,6 +85,7 @@ class VerifyResult:
     session_id: str = ""
     screenshot_path: str | None = None
     controls_found: int = 0
+    pid: int | None = None
 
 
 # ── Main entry point ─────────────────────────────────────────────
@@ -128,7 +134,7 @@ def run_verify(
                         result={"alive": alive})
 
         if not alive:
-            return _build_result(checks, session, last_screenshot, controls_found)
+            return _build_result(checks, session, last_screenshot, controls_found, pid)
 
         # Resolve target
         target = _find_target(pid, config.title_re, config.startup_wait_ms)
@@ -169,7 +175,7 @@ def run_verify(
 
         logger.close()
 
-    return _build_result(checks, session, last_screenshot, controls_found)
+    return _build_result(checks, session, last_screenshot, controls_found, pid)
 
 
 # ── Helper functions ─────────────────────────────────────────────
@@ -180,6 +186,7 @@ def _build_result(
     session: Session,
     last_screenshot: str | None,
     controls_found: int,
+    pid: int | None = None,
 ) -> VerifyResult:
     all_passed = all(c.passed for c in checks)
     return VerifyResult(
@@ -188,6 +195,7 @@ def _build_result(
         session_id=session.session_id,
         screenshot_path=last_screenshot,
         controls_found=controls_found,
+        pid=pid,
     )
 
 
@@ -195,6 +203,7 @@ def _launch_app(exe: str, args: list[str], cwd: str | None) -> int:
     """Start the application and return its PID."""
     cmd = [exe] + args
     proc = subprocess.Popen(cmd, cwd=cwd)
+    record_launched_pid(proc.pid, exe)
     return proc.pid
 
 
@@ -466,3 +475,4 @@ def _terminate_app(pid: int) -> None:
             proc.kill()
     except psutil.NoSuchProcess:
         pass
+    remove_launched_pid(pid)

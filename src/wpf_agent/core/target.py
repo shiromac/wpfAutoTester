@@ -18,11 +18,11 @@ from wpf_agent.core.errors import TargetNotFoundError
 
 
 # ── Launched PID tracking ────────────────────────────────────────
-# Records PIDs started via `wpf-agent launch` / `_resolve_by_exe`
+# Records PIDs started by wpf-agent (launch, verify, etc.)
 # so that `wpf-agent ui close` can verify it only closes processes
 # that *we* started.
 
-def _record_launched_pid(pid: int, exe: str) -> None:
+def record_launched_pid(pid: int, exe: str) -> None:
     """Persist a launched PID to disk."""
     entries = _load_launched_entries()
     entries.append({"pid": pid, "exe": exe, "ts": time.time()})
@@ -190,7 +190,7 @@ class TargetRegistry:
         if proc.poll() is not None:
             raise TargetNotFoundError(f"Process exited immediately: {exe}")
         basename = exe.replace("\\", "/").rsplit("/", 1)[-1]
-        _record_launched_pid(proc.pid, exe)
+        record_launched_pid(proc.pid, exe)
         t = ResolvedTarget(pid=proc.pid, process_name=basename)
         tid = self._register(t)
         return tid, t

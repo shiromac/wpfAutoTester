@@ -278,12 +278,12 @@ wpf-agent tickets create --title "タイトル" --summary "概要" --actual-resu
 ```
 **注意**: 全引数を1行で記述すること。`--repro` と `--evidence` は複数回指定可能。
 
-## アプリ終了（launch で起動した場合）
+## アプリ終了（wpf-agent で起動した場合）
 
 ```bash
-wpf-agent ui close --pid <pid>
+wpf-agent close --pid <pid>
 ```
-`wpf-agent launch` で起動したプロセスのみ閉じられる (WM_CLOSE)。手動で起動したアプリはユーザーに閉じてもらう。
+`wpf-agent launch` または `wpf-agent verify` で起動したプロセスを閉じられる (WM_CLOSE)。手動で起動したアプリはユーザーに閉じてもらう。
 
 ## ユーザーへの報告
 

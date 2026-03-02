@@ -18,6 +18,7 @@ wpf-agent personas list/add/edit/remove  # ペルソナプリセット管理
 wpf-agent run --profile <name>           # エージェントループ
 wpf-agent attach --pid <pid>             # PID接続
 wpf-agent launch --exe <path>            # 起動接続
+wpf-agent close --pid <pid>             # 起動したプロセスを終了
 wpf-agent scenario run --file <yaml>     # シナリオテスト
 wpf-agent random run --profile <name>    # ランダムテスト
 wpf-agent explore run --profile <name>   # AI誘導型探索テスト
@@ -40,7 +41,7 @@ wpf-agent ui click --pid <pid> --aid <id>                # クリック
 wpf-agent ui type --pid <pid> --aid <id> --text "..."    # テキスト入力
 wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
 wpf-agent ui select-combo --pid <pid> --aid <id> --item "text"  # コンボボックス選択
-wpf-agent ui close --pid <pid>                           # WM_CLOSE で終了 (launch 起動のみ)
+wpf-agent ui close --pid <pid>                           # WM_CLOSE で終了 (wpf-agent 起動プロセスのみ)
 ```
 
 #### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
