@@ -17,14 +17,14 @@ Claude Code と統合された AI 駆動型 WPF UI テストエージェント�
 ## インストール
 
 ```bash
-pip install git+https://github.com/shiro-mac/wpf-agent.git
+pip install git+https://github.com/shiromac/wpfAutoTester.git
 ```
 
 開発用:
 
 ```bash
-git clone https://github.com/shiro-mac/wpf-agent.git
-cd wpf-agent
+git clone https://github.com/shiromac/wpfAutoTester.git
+cd wpfAutoTester
 pip install -e .[dev]
 ```
 
@@ -129,7 +129,7 @@ wpf-agent replay --file artifacts/sessions/<session-id>/actions.json --profile M
 ```bash
 # CLI でチケット作成
 wpf-agent tickets create --title "ボタンクリックでクラッシュ" --summary "保存ボタン押下時に異常終了" \
-  --actual "クラッシュ" --expected "正常保存" --repro "MainButton をクリック" --pid 1234
+  --actual-result "クラッシュ" --expected-result "正常保存" --repro-steps "MainButton をクリック" --pid 1234
 
 # 最新のチケットを表示
 wpf-agent tickets open --last
@@ -227,12 +227,43 @@ wpf-agent ui --no-guard click --pid ...                 # ガードスキップ
 | `screenshot` | スクリーンショットを撮影 |
 | `wait_for` | UI 条件の成立を待機 |
 
-## VS Code Copilot 対応
+## VS Code Copilot でのインストール
 
-`.claude/skills/` のスキルは [Agent Skills](https://agentskills.io) オープン標準に準拠しています。
-VS Code Copilot (Insiders / エージェントモード) が自動的に検出します — 追加設定は不要です。
+`.claude/skills/` のスキルは [Agent Skills](https://agentskills.io) オープン標準に準拠しており、VS Code Copilot のエージェントモードから利用できます。
 
-GitHub Copilot Coding Agent（リポジトリレベル）用にもインストールする場合:
+### 前提条件
+
+- VS Code Insiders（またはエージェントモード対応の VS Code）
+- GitHub Copilot 拡張機能がインストール済み
+- Python 3.10 以上
+
+### セットアップ手順
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/shiromac/wpfAutoTester.git
+cd wpfAutoTester
+
+# 2. パッケージをインストール
+pip install -e .[dev]
+
+# 3. 初期化（profiles.json 等を生成）
+wpf-agent init
+
+# 4. スキルをインストール（.claude/skills/ に配置）
+wpf-agent install-skills
+```
+
+### VS Code での使い方
+
+1. VS Code でプロジェクトフォルダを開く
+2. Copilot チャットをエージェントモードに切り替える
+3. `.claude/skills/` 内のスキルが自動検出される
+4. チャットからスキルを呼び出して UI テストを実行
+
+### GitHub Copilot Coding Agent（リポジトリレベル）
+
+GitHub 上で Copilot Coding Agent を使う場合は、`.github/skills/` にもスキルをコピーします:
 
 ```bash
 wpf-agent install-skills --github

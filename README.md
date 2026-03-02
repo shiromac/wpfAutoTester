@@ -17,14 +17,14 @@ AI-driven WPF UI testing agent integrated with Claude Code. Claude reads screens
 ## Installation
 
 ```bash
-pip install git+https://github.com/shiro-mac/wpf-agent.git
+pip install git+https://github.com/shiromac/wpfAutoTester.git
 ```
 
 Or for development:
 
 ```bash
-git clone https://github.com/shiro-mac/wpf-agent.git
-cd wpf-agent
+git clone https://github.com/shiromac/wpfAutoTester.git
+cd wpfAutoTester
 pip install -e .[dev]
 ```
 
@@ -126,7 +126,7 @@ wpf-agent replay --file artifacts/sessions/<id>/actions.json --profile MyApp
 ```bash
 # Create a ticket from CLI
 wpf-agent tickets create --title "Button crash" --summary "App crashes on click" \
-  --actual "Crash" --expected "No crash" --repro "Click MainButton" --pid 1234
+  --actual-result "Crash" --expected-result "No crash" --repro-steps "Click MainButton" --pid 1234
 
 # View latest ticket
 wpf-agent tickets open --last
@@ -221,12 +221,43 @@ Action commands (`focus`, `click`, `type`, `toggle`) sample mouse position for 5
 | `screenshot` | Capture screenshot |
 | `wait_for` | Wait for UI condition |
 
-## VS Code Copilot Support
+## VS Code Copilot Installation
 
-The skills in `.claude/skills/` are compatible with the [Agent Skills](https://agentskills.io) open standard.
-VS Code Copilot (Insiders / agent mode) auto-detects them — no extra configuration needed.
+The skills in `.claude/skills/` follow the [Agent Skills](https://agentskills.io) open standard and work with VS Code Copilot's agent mode.
 
-To also install skills for GitHub Copilot Coding Agent (repository-level):
+### Prerequisites
+
+- VS Code Insiders (or VS Code with agent mode support)
+- GitHub Copilot extension installed
+- Python 3.10+
+
+### Setup
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/shiromac/wpfAutoTester.git
+cd wpfAutoTester
+
+# 2. Install the package
+pip install -e .[dev]
+
+# 3. Initialize (generates profiles.json, etc.)
+wpf-agent init
+
+# 4. Install skills (places them in .claude/skills/)
+wpf-agent install-skills
+```
+
+### Usage in VS Code
+
+1. Open the project folder in VS Code
+2. Switch Copilot chat to agent mode
+3. Skills in `.claude/skills/` are auto-detected
+4. Invoke skills from the chat to run UI tests
+
+### GitHub Copilot Coding Agent (Repository-Level)
+
+To use with GitHub Copilot Coding Agent, also copy skills to `.github/skills/`:
 
 ```bash
 wpf-agent install-skills --github

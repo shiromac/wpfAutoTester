@@ -62,7 +62,7 @@ wpf-agent verify --exe <path>            # ビルド後自動検証
 wpf-agent verify --exe <path> --spec <yaml>  # spec付き検証
 wpf-agent replay --file <json>           # リプレイ
 wpf-agent tickets open --last            # チケット確認
-wpf-agent tickets create --title "..." --summary "..." --actual "..." --expected "..." [--repro "..."] [--evidence <path>] [--hypothesis "..."] [--pid N] [--process "..."] [--profile "..."]
+wpf-agent tickets create --title "..." --summary "..." --actual-result "..." --expected-result "..." [--repro-steps "..."] [--evidence <path>] [--root-cause "..."] [--pid N] [--process "..."] [--profile "..."]
 wpf-agent tickets list-pending           # 未分類チケット一覧
 wpf-agent tickets triage --ticket <path> --decision <fix|wontfix> [--reason "..."]
 ```
@@ -111,11 +111,16 @@ wpf-agent ui windows --brief
 wpf-agent ui alive --process MyApp --brief
 #=> 12345
 
-# 3. 以降は --pid で操作
+# 3. セッションディレクトリを作成 (タイムスタンプは自動生成)
+wpf-agent ui init-session --prefix explore
+#=> {"path": "artifacts/sessions/explore_20260301_153045"}
+
+# 4. 以降は --pid で操作
 wpf-agent ui controls --pid 12345 --brief
-wpf-agent ui screenshot --pid 12345 --save /tmp/screen.png
+wpf-agent ui screenshot --pid 12345 --save artifacts/sessions/explore_20260301_153045/screen.png
 wpf-agent ui click --pid 12345 --aid BtnOK
 ```
+**注意**: タイムスタンプの取得には `init-session` を使うこと。`pwsh` や `date` コマンドで時刻を取得する必要はない。
 
 ### UI ガード (マウス移動検知)
 操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 50ms サンプリングし、ユーザーのマウス移動 (>2px) を検出すると操作を中断する。中断後は pause ファイル (`~/.wpf-agent/pause`) で持続的にブロックされる。`close` はガード対象外（launch 起動プロセス限定で安全なため）。

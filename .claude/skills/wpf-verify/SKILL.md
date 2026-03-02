@@ -43,9 +43,9 @@ wpf-agent verify --exe <path/to/App.exe> --spec verify-spec.yaml
 - **VERIFICATION PASSED**: 全チェック合格
 - **VERIFICATION FAILED**: 問題あり → 失敗内容を分析してコード修正を提案
 
-### 5. チケット作成（必須 — スキップ禁止）
+### 5. チケット作成
 
-検証結果に関わらず、**必ず以下の CLI コマンドでチケットを作成する**。
+検証結果を以下の CLI コマンドでチケットとして記録する。
 
 #### a. 検証結果を整理して以下を決定
 - **title**: PASSED なら `検証完了 — 全チェック合格 (<アプリ名>)` / FAILED なら具体的な失敗を記述
@@ -56,7 +56,7 @@ wpf-agent verify --exe <path/to/App.exe> --spec verify-spec.yaml
 
 #### b. CLI でチケットを作成
 ```bash
-wpf-agent tickets create --title "タイトル" --summary "概要" --actual "実際の結果" --expected "期待される結果" --evidence "スクリーンショットパス" --hypothesis "原因の仮説"
+wpf-agent tickets create --title "タイトル" --summary "概要" --actual-result "実際の結果" --expected-result "期待される結果" --evidence "スクリーンショットパス" --root-cause "原因の仮説"
 ```
 **注意**: 全引数を1行で記述すること。
 
@@ -96,7 +96,6 @@ interactions:
 ```
 
 ## 注意事項
-- **チケット作成をスキップしないこと** — 検証の成果物として必ず残す
 - スクリーンショットはチケットディレクトリにコピーすること
 - **Bash コマンドは必ず1行で記述する** — パーミッション glob `*` は改行にマッチしないため、複数行コマンドは毎回確認プロンプトが出る。複雑な処理は `wpf-agent` CLI サブコマンド（例: `wpf-agent tickets create`）を使う
 
