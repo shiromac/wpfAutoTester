@@ -79,9 +79,9 @@ wpf-agent ui state --pid <pid> --aid <automation_id>
 再度スクリーンショットを撮影し、期待通りの変化があったか確認する。
 問題（クラッシュ、表示崩れ、予期せぬエラー）を発見したら記録する。
 
-### 4. チケット作成（必須 — スキップ禁止）
+### 4. チケット作成
 
-探索が完了したら（中断された場合も含め）、**必ず以下の CLI コマンドでチケットを作成する**。
+探索が完了したら（中断された場合も含め）、以下の CLI コマンドでチケットを作成する。
 問題が見つからなかった場合も「問題なし」のチケットを作成する。
 
 #### a. エビデンスのスクリーンショットを保存
@@ -100,7 +100,7 @@ wpf-agent ui screenshot --pid <pid> --save artifacts/sessions/explore_evidence.p
 
 #### c. CLI でチケットを作成
 ```bash
-wpf-agent tickets create --title "タイトル" --summary "概要" --actual "実際の結果" --expected "期待される結果" --repro "ステップ1" --repro "ステップ2" --evidence "artifacts/sessions/explore_evidence.png" --hypothesis "原因の仮説" --pid <pid>
+wpf-agent tickets create --title "タイトル" --summary "概要" --actual-result "実際の結果" --expected-result "期待される結果" --repro-steps "ステップ1" --repro-steps "ステップ2" --evidence "artifacts/sessions/explore_evidence.png" --root-cause "原因の仮説" --pid <pid>
 ```
 **注意**: 全引数を1行で記述すること。`--repro` と `--evidence` は複数回指定可能。
 
@@ -134,7 +134,7 @@ UI 操作コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウ
 
 **中断を検知したら:**
 1. 探索ループを即座に停止する
-2. **それまでの結果で `wpf-agent tickets create` を実行する**（手順4へ進む）
+2. それまでの結果でチケットを作成する（手順4へ進む）
 3. ユーザーに報告する
 
 読み取り専用コマンド (`screenshot`, `controls`, `read`, `state`) は一時停止中も実行可能。
@@ -144,5 +144,4 @@ UI 操作コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウ
 - プロセスの生存確認は `wpf-agent ui alive --pid <pid>` を使う（`tasklist | findstr` は不要）
 - アプリがクラッシュした場合は再起動して続行
 - 破壊的操作（削除ボタン等）は慎重に判断すること
-- **チケット作成をスキップしないこと** — 探索の成果物として必ず残す
 - **Bash コマンドは必ず1行で記述する** — パーミッション glob `*` は改行にマッチしないため、複数行コマンドは毎回確認プロンプトが出る。複雑な処理は `wpf-agent` CLI サブコマンド（例: `wpf-agent tickets create`）を使う

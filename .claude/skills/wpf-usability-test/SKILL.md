@@ -258,9 +258,9 @@ Write ツールで `actions.md` に行を追記:
 | step_01.png - step_NN.png | 各ステップのスクリーンショット |
 ```
 
-## チケット作成（必須 — スキップ禁止）
+## チケット作成
 
-報告書作成後、**必ず以下の CLI コマンドでチケットを作成する**。
+報告書作成後、以下の CLI コマンドでチケットを作成する。
 
 #### a. テスト結果を整理して以下を決定
 - **title**: 問題ありなら `ユーザビリティ: <主要な問題>` / 問題なしなら `ユーザビリティテスト完了 — 問題なし (<アプリ名>)`
@@ -272,7 +272,7 @@ Write ツールで `actions.md` に行を追記:
 
 #### b. CLI でチケットを作成
 ```bash
-wpf-agent tickets create --title "タイトル" --summary "概要" --actual "実際の結果" --expected "期待される結果" --repro "ステップ1" --repro "ステップ2" --evidence "artifacts/sessions/usability_.../step_01.png" --hypothesis "原因の仮説" --pid <pid>
+wpf-agent tickets create --title "タイトル" --summary "概要" --actual-result "実際の結果" --expected-result "期待される結果" --repro-steps "ステップ1" --repro-steps "ステップ2" --evidence "artifacts/sessions/usability_.../step_01.png" --root-cause "原因の仮説" --pid <pid>
 ```
 **注意**: 全引数を1行で記述すること。`--repro` と `--evidence` は複数回指定可能。
 
@@ -309,7 +309,7 @@ UI 操作コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウ
 **中断を検知したら:**
 1. メインループを即座に停止する
 2. **それまでの結果で報告書を作成する**（最終報告書の作成へ進む）
-3. **`wpf-agent tickets create` でチケットを作成する**（チケット作成へ進む）
+3. チケットを作成する（チケット作成セクションへ進む）
 4. ユーザーに報告する
 
 読み取り専用コマンド (`screenshot`, `controls`, `read`, `state`) は一時停止中も実行可能。
@@ -319,6 +319,5 @@ UI 操作コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウ
 - プロセスの生存確認は `wpf-agent ui alive --pid <pid>` を使う
 - アプリがクラッシュした場合は報告書に記録して終了
 - 破壊的操作（削除ボタン等）はペルソナの性格に応じて判断すること
-- **チケット作成をスキップしないこと** — テストの成果物として必ず残す
 - **Bash コマンドは必ず1行で記述する** — パーミッション glob `*` は改行にマッチしないため
 - ペルソナの思考は**自然な日本語の口語**で表現すること（「〜だな」「〜かな？」「あれ？」等）
