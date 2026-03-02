@@ -48,12 +48,12 @@ wpf-agent ui alive --process <name> --brief
 
 ### 2. セッションディレクトリ作成
 
-タイムスタンプ付きディレクトリを作成:
+```bash
+wpf-agent ui init-session --prefix usability
 ```
-artifacts/sessions/usability_YYYYMMDD_HHMMSS/
-```
+出力 JSON の `path` をセッションディレクトリとして使用する（例: `artifacts/sessions/usability_20260301_153045/`）。
 
-Write ツールで以下のファイルを作成:
+Write ツールで以下のファイルをセッションディレクトリ内に作成:
 
 #### persona.md
 ```markdown
@@ -98,25 +98,17 @@ wpf-agent ui focus --pid <pid>
 
 各ステップで以下を実行:
 
-### a. スクリーンショット撮影
+### a. スクリーンショット撮影 + 確認
 
 ```bash
-wpf-agent ui screenshot --pid <pid> --save artifacts/sessions/usability_<timestamp>/step_NN.png
+wpf-agent ui screenshot --pid <pid> --save <session_dir>/step_NN.png
 ```
+Read ツールで画像ファイルを読み込み、画面の状態を**視覚的に**把握する。
 
-### b. スクリーンショットを確認
+### b. ペルソナとして思考を声に出す（スクリーンショットだけを見て判断）
 
-Read ツールで画像ファイルを読み込み、画面の状態を視覚的に把握する。
-
-### c. コントロール一覧取得
-
-```bash
-wpf-agent ui controls --pid <pid> --depth 4 --has-aid --brief
-```
-
-### d. ペルソナとして思考を声に出す
-
-**ここが最重要ステップ。** ペルソナになりきって、以下を**ユーザーに表示**する:
+**ここが最重要ステップ。** スクリーンショットの見た目だけを頼りに、ペルソナになりきって以下を**ユーザーに表示**する。
+**コントロール一覧は見ずに、画面の視覚情報だけで「何を押すか」を決める**こと（人間はコントロールツリーを見ない）。
 
 > **[ペルソナ名] Step N:**
 > 「（画面を見た第一印象）」
@@ -140,7 +132,17 @@ wpf-agent ui controls --pid <pid> --depth 4 --has-aid --brief
 ![step_NN](step_NN.png)
 ```
 
-### e. 操作を実行
+### c. コントロール一覧で automation_id を特定
+
+ステップ b で「押す」と決めた要素の automation_id を調べるために、コントロール一覧を取得する。
+**目的はセレクタ取得のみ** — 操作対象の決定はスクリーンショットで既に済んでいる。
+
+```bash
+wpf-agent ui controls --pid <pid> --depth 4 --has-aid --brief
+```
+一覧からステップ b で選んだ要素に対応する `automation_id` を探す。見つからない場合は `--name` + `--control-type` で指定する。
+
+### d. 操作を実行
 
 ```bash
 # クリック
@@ -159,7 +161,7 @@ wpf-agent ui read --pid <pid> --aid <automation_id>
 wpf-agent ui state --pid <pid> --aid <automation_id>
 ```
 
-### f. 結果を確認し反応を記録
+### e. 結果を確認し反応を記録
 
 再度スクリーンショットを撮影し、ペルソナとして反応を表示:
 
@@ -177,7 +179,7 @@ Write ツールで `actions.md` に行を追記:
 | N | M:SS | click | MainButton | StatusLabel が "Clicked" に変化 |
 ```
 
-### g. ユーザビリティ問題を記録
+### f. ユーザビリティ問題を記録
 
 操作中に以下を感じたら**問題として記録**する（最終報告書用にメモ）:
 - **迷い**: どこを押せばいいかわからない
@@ -187,7 +189,7 @@ Write ツールで `actions.md` に行を追記:
 - **効率の悪さ**: 必要以上にステップが多い
 - **発見不能**: 必要な機能が見つからない
 
-### h. 終了判定
+### g. 終了判定
 
 - **ゴール達成**: 目的を達成できた → ループ終了
 - **断念**: ペルソナが「もうわからない、諦める」と判断 → ループ終了
