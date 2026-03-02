@@ -227,12 +227,43 @@ wpf-agent ui --no-guard click --pid ...                 # ガードスキップ
 | `screenshot` | スクリーンショットを撮影 |
 | `wait_for` | UI 条件の成立を待機 |
 
-## VS Code Copilot 対応
+## VS Code Copilot でのインストール
 
-`.claude/skills/` のスキルは [Agent Skills](https://agentskills.io) オープン標準に準拠しています。
-VS Code Copilot (Insiders / エージェントモード) が自動的に検出します — 追加設定は不要です。
+`.claude/skills/` のスキルは [Agent Skills](https://agentskills.io) オープン標準に準拠しており、VS Code Copilot のエージェントモードから利用できます。
 
-GitHub Copilot Coding Agent（リポジトリレベル）用にもインストールする場合:
+### 前提条件
+
+- VS Code Insiders（またはエージェントモード対応の VS Code）
+- GitHub Copilot 拡張機能がインストール済み
+- Python 3.10 以上
+
+### セットアップ手順
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/shiromac/wpfAutoTester.git
+cd wpfAutoTester
+
+# 2. パッケージをインストール
+pip install -e .[dev]
+
+# 3. 初期化（profiles.json 等を生成）
+wpf-agent init
+
+# 4. スキルをインストール（.claude/skills/ に配置）
+wpf-agent install-skills
+```
+
+### VS Code での使い方
+
+1. VS Code でプロジェクトフォルダを開く
+2. Copilot チャットをエージェントモードに切り替える
+3. `.claude/skills/` 内のスキルが自動検出される
+4. チャットからスキルを呼び出して UI テストを実行
+
+### GitHub Copilot Coding Agent（リポジトリレベル）
+
+GitHub 上で Copilot Coding Agent を使う場合は、`.github/skills/` にもスキルをコピーします:
 
 ```bash
 wpf-agent install-skills --github
