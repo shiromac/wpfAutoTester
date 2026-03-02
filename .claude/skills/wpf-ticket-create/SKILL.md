@@ -29,7 +29,7 @@ wpf-agent ui controls --pid <pid> --depth 4
 ### 3. チケット生成
 CLI コマンドで作成する:
 ```bash
-wpf-agent tickets create --title "<タイトル>" --summary "<概要>" --actual "<実際の結果>" --expected "<期待される結果>" --repro "<ステップ1>" --repro "<ステップ2>" --evidence "artifacts/sessions/ticket_evidence.png" --hypothesis "<原因の仮説>" --pid <pid> --process "<プロセス名>" --profile "<プロファイル名>"
+wpf-agent tickets create --title "<タイトル>" --summary "<概要>" --actual-result "<実際の結果>" --expected-result "<期待される結果>" --repro-steps "<ステップ1>" --repro-steps "<ステップ2>" --evidence "artifacts/sessions/ticket_evidence.png" --root-cause "<原因の仮説>" --pid <pid> --process "<プロセス名>" --profile "<プロファイル名>"
 ```
 
 `--repro` と `--evidence` は複数回指定可能。

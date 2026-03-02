@@ -62,7 +62,7 @@ wpf-agent verify --exe <path>            # ビルド後自動検証
 wpf-agent verify --exe <path> --spec <yaml>  # spec付き検証
 wpf-agent replay --file <json>           # リプレイ
 wpf-agent tickets open --last            # チケット確認
-wpf-agent tickets create --title "..." --summary "..." --actual "..." --expected "..." [--repro "..."] [--evidence <path>] [--hypothesis "..."] [--pid N] [--process "..."] [--profile "..."]
+wpf-agent tickets create --title "..." --summary "..." --actual-result "..." --expected-result "..." [--repro-steps "..."] [--evidence <path>] [--root-cause "..."] [--pid N] [--process "..."] [--profile "..."]
 wpf-agent tickets list-pending           # 未分類チケット一覧
 wpf-agent tickets triage --ticket <path> --decision <fix|wontfix> [--reason "..."]
 ```

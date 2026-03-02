@@ -129,7 +129,7 @@ wpf-agent replay --file artifacts/sessions/<session-id>/actions.json --profile M
 ```bash
 # CLI でチケット作成
 wpf-agent tickets create --title "ボタンクリックでクラッシュ" --summary "保存ボタン押下時に異常終了" \
-  --actual "クラッシュ" --expected "正常保存" --repro "MainButton をクリック" --pid 1234
+  --actual-result "クラッシュ" --expected-result "正常保存" --repro-steps "MainButton をクリック" --pid 1234
 
 # 最新のチケットを表示
 wpf-agent tickets open --last

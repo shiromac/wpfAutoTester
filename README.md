@@ -126,7 +126,7 @@ wpf-agent replay --file artifacts/sessions/<id>/actions.json --profile MyApp
 ```bash
 # Create a ticket from CLI
 wpf-agent tickets create --title "Button crash" --summary "App crashes on click" \
-  --actual "Crash" --expected "No crash" --repro "Click MainButton" --pid 1234
+  --actual-result "Crash" --expected-result "No crash" --repro-steps "Click MainButton" --pid 1234
 
 # View latest ticket
 wpf-agent tickets open --last
