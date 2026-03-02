@@ -384,6 +384,16 @@ def launch(exe, args):
     click.echo(f"Launched: {target} (target_id={tid})")
 
 
+@main.command("close")
+@click.option("--pid", required=True, type=int, help="PID of the process to close")
+def close_cmd(pid):
+    """Gracefully close a process launched by wpf-agent.
+
+    Alias for `wpf-agent ui close`. Sends WM_CLOSE to the main window.
+    """
+    _do_close(pid)
+
+
 # ── ui ────────────────────────────────────────────────────────────
 
 
@@ -726,22 +736,28 @@ def ui_alive(pid, process, brief):
             click.echo(json.dumps(result, ensure_ascii=False))
 
 
-@ui_cmd.command("close")
-@click.option("--pid", required=True, type=int, help="PID of the process to close")
-def ui_close(pid):
-    """Gracefully close a process launched by wpf-agent.
-
-    Only processes started via `wpf-agent launch` can be closed.
-    Sends WM_CLOSE to the main window (does not force-kill).
-    """
+def _do_close(pid: int) -> None:
+    """Shared implementation for ``ui close`` and top-level ``close``."""
     import ctypes
 
     from wpf_agent.core.target import is_launched_pid, remove_launched_pid
 
     if not is_launched_pid(pid):
-        click.echo(
-            json.dumps({"closed": False, "error": "PID was not launched by wpf-agent"}, ensure_ascii=False)
-        )
+        import psutil as _ps
+
+        if _ps.pid_exists(pid):
+            try:
+                pname = _ps.Process(pid).name()
+            except _ps.AccessDenied:
+                pname = "unknown"
+            msg = (
+                f"PID {pid} ({pname}) was not started by wpf-agent. "
+                "Only processes launched via 'wpf-agent launch' or "
+                "'wpf-agent verify' can be closed with this command."
+            )
+        else:
+            msg = f"PID {pid} does not exist."
+        click.echo(json.dumps({"closed": False, "error": msg}, ensure_ascii=False))
         sys.exit(1)
 
     # Find the main window for this PID and send WM_CLOSE
@@ -770,6 +786,17 @@ def ui_close(pid):
     else:
         click.echo(json.dumps({"closed": False, "pid": pid, "error": "No visible window found"}, ensure_ascii=False))
         sys.exit(1)
+
+
+@ui_cmd.command("close")
+@click.option("--pid", required=True, type=int, help="PID of the process to close")
+def ui_close(pid):
+    """Gracefully close a process launched by wpf-agent.
+
+    Processes started via `wpf-agent launch` or `wpf-agent verify --no-close`
+    can be closed.  Sends WM_CLOSE to the main window (does not force-kill).
+    """
+    _do_close(pid)
 
 
 @ui_cmd.command("init-session")
@@ -1046,6 +1073,12 @@ def verify(exe, app_args, title_re, spec, timeout, no_close):
     click.echo(f"Controls found: {result.controls_found}")
     if result.screenshot_path:
         click.echo(f"Screenshot: {result.screenshot_path}")
+
+    if no_close and result.pid:
+        click.echo(
+            f"\nApp left running (PID {result.pid}). "
+            f"To close: wpf-agent close --pid {result.pid}"
+        )
 
 
 # ── replay ────────────────────────────────────────────────────────
