@@ -17,13 +17,13 @@ Claude Code と統合された AI 駆動型 WPF UI テストエージェント�
 ## インストール
 
 ```bash
-pip install git+https://github.com/shiro-mac/wpf-agent.git
+pip install git+https://github.com/shiromac/wpfAutoTester.git
 ```
 
 開発用:
 
 ```bash
-git clone https://github.com/shiro-mac/wpf-agent.git
+git clone https://github.com/shiromac/wpfAutoTester.git
 cd wpf-agent
 pip install -e .[dev]
 ```
