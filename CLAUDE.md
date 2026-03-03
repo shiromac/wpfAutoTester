@@ -3,6 +3,26 @@
 ## プロジェクト概要
 Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作する。
 
+## テキスト入力・読み取りの禁止事項（重要）
+UI 要素へのテキスト入力とテキスト読み取りは、**必ず `wpf-agent ui type` / `wpf-agent ui read` コマンド、または MCP ツール `type_text` / `read_text` を使うこと**。以下の手段で直接操作してはならない:
+
+- **禁止**: `python -c` で pywinauto の `set_edit_text()`, `type_keys()`, `window_text()`, `get_value()` を直接呼ぶ
+- **禁止**: `xdotool type`, `xdotool key` でキーボード入力をシミュレートする
+- **禁止**: `python -c` で `keyboard`, `pyautogui`, `pynput` モジュールを使ってキー入力する
+- **禁止**: クリップボード経由 (`pyperclip`, `xclip`, `xsel`, Ctrl+V) でテキストを貼り付ける
+- **禁止**: `SendKeys`, `xte`, `ydotool` 等の外部ツールでキー入力をシミュレートする
+
+正しい方法:
+```bash
+# テキスト入力 (正しい)
+wpf-agent ui type --pid <pid> --aid <id> --text "入力値"
+
+# テキスト読み取り (正しい)
+wpf-agent ui read --pid <pid> --aid <id>
+```
+
+理由: `wpf-agent ui type` はマウス移動ガード (UI ガード) を通るため安全。直接操作はガードを回避してしまい、ユーザーの操作と競合する危険がある。
+
 ## Bash コマンド生成ルール
 - `wpf-agent` やパイプ付きコマンドは**必ず1行で記述**すること（改行禁止）
   - glob パーミッション `Bash(wpf-agent *)` の `*` は改行にマッチしない
@@ -220,6 +240,8 @@ UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionC
 | 「シナリオテストして」 | `/wpf-scenario` を実行 |
 | 「チケット見せて」「バグ一覧」 | `/wpf-ticket` を実行 |
 | 「チケット整理して」 | `/wpf-ticket-triage` を実行 |
+| 「〇〇に入力して」「テキストを入れて」 | `/wpf-type` を実行。**python/xdotool で直接入力しない** |
+| 「〇〇の値を読んで」「テキストを取得して」 | `wpf-agent ui read --pid <pid> --aid <id>` を実行。**python で直接読み取らない** |
 
 ### 判断のフロー
 1. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
