@@ -17,6 +17,33 @@ from wpf_agent.core.target import ResolvedTarget
 
 # Win32 constants
 PW_RENDERFULLCONTENT = 0x00000002
+# DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 (Windows 10 1703+)
+_DPI_CONTEXT_PMV2 = ctypes.c_void_p(-4)
+
+
+class _dpi_aware_context:
+    """Context manager: temporarily set thread DPI awareness to per-monitor v2.
+
+    Without this, GetWindowRect returns *logical* (scaled-down) coordinates
+    on high-DPI displays, causing screenshots to be captured at reduced
+    resolution (e.g. 1707px instead of 2560px at 150% scaling).
+    """
+
+    def __enter__(self):
+        try:
+            self._prev = ctypes.windll.user32.SetThreadDpiAwarenessContext(
+                _DPI_CONTEXT_PMV2
+            )
+        except (AttributeError, OSError):
+            self._prev = None  # older Windows — no-op
+        return self
+
+    def __exit__(self, *exc):
+        if self._prev is not None:
+            try:
+                ctypes.windll.user32.SetThreadDpiAwarenessContext(self._prev)
+            except (AttributeError, OSError):
+                pass
 
 
 def _capture_with_print_window(hwnd: int) -> Image.Image | None:
@@ -200,42 +227,43 @@ def capture_screenshot(
     """
     img = None
 
-    if target and not region:
-        # Try PrintWindow first (handles WPF DirectX rendering)
-        try:
-            from wpf_agent.uia.engine import _top_window
-
-            win = _top_window(target)
-            main_hwnd = win.handle
-
-            # Find all visible windows for this PID via Win32 EnumWindows
-            # (pywinauto Desktop.windows() misses WPF popup HWNDs)
-            popup_hwnds = _enum_process_windows(target.pid)
-
-            if len(popup_hwnds) <= 1:
-                # No popups — capture main window only (original path)
-                if main_hwnd:
-                    img = _capture_with_print_window(main_hwnd)
-            else:
-                # Popups detected — composite all windows
-                img = _composite_process_windows(popup_hwnds, main_hwnd)
-        except Exception:
-            pass
-
-    if img is None:
-        # Fallback to ImageGrab (BitBlt-based)
-        bbox = None
-        if region:
-            bbox = (region["left"], region["top"], region["right"], region["bottom"])
-        elif target:
+    with _dpi_aware_context():
+        if target and not region:
+            # Try PrintWindow first (handles WPF DirectX rendering)
             try:
                 from wpf_agent.uia.engine import _top_window
+
                 win = _top_window(target)
-                r = win.rectangle()
-                bbox = (r.left, r.top, r.right, r.bottom)
+                main_hwnd = win.handle
+
+                # Find all visible windows for this PID via Win32 EnumWindows
+                # (pywinauto Desktop.windows() misses WPF popup HWNDs)
+                popup_hwnds = _enum_process_windows(target.pid)
+
+                if len(popup_hwnds) <= 1:
+                    # No popups — capture main window only (original path)
+                    if main_hwnd:
+                        img = _capture_with_print_window(main_hwnd)
+                else:
+                    # Popups detected — composite all windows
+                    img = _composite_process_windows(popup_hwnds, main_hwnd)
             except Exception:
                 pass
-        img = ImageGrab.grab(bbox=bbox)
+
+        if img is None:
+            # Fallback to ImageGrab (BitBlt-based)
+            bbox = None
+            if region:
+                bbox = (region["left"], region["top"], region["right"], region["bottom"])
+            elif target:
+                try:
+                    from wpf_agent.uia.engine import _top_window
+                    win = _top_window(target)
+                    r = win.rectangle()
+                    bbox = (r.left, r.top, r.right, r.bottom)
+                except Exception:
+                    pass
+            img = ImageGrab.grab(bbox=bbox)
 
     if save_path is None:
         import tempfile
