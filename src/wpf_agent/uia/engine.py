@@ -9,7 +9,11 @@ from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
 from wpf_agent.constants import DEFAULT_DEPTH, MAX_CONTROLS
-from wpf_agent.core.errors import SelectorNotFoundError, TargetNotFoundError
+from wpf_agent.core.errors import (
+    MultipleElementsFoundError,
+    SelectorNotFoundError,
+    TargetNotFoundError,
+)
 from wpf_agent.core.target import ResolvedTarget
 from wpf_agent.uia.selector import Selector
 
@@ -67,10 +71,19 @@ class UIAEngine:
         target: ResolvedTarget,
         depth: int = DEFAULT_DEPTH,
         filter_type: str | None = None,
+        search: str | None = None,
     ) -> list[dict[str, Any]]:
         win = _top_window(target)
         controls: list[dict[str, Any]] = []
         _walk(win, controls, depth=depth, current=0, filter_type=filter_type)
+        if search:
+            q = search.lower()
+            controls = [
+                c for c in controls
+                if q in (c.get("automation_id") or "").lower()
+                or q in (c.get("name") or "").lower()
+                or q in (c.get("value") or "").lower()
+            ]
         return controls[:MAX_CONTROLS]
 
     # ------------------------------------------------------------------
@@ -85,14 +98,53 @@ class UIAEngine:
 
     @staticmethod
     def type_text(
-        target: ResolvedTarget, selector: Selector, text: str, clear: bool = True
+        target: ResolvedTarget,
+        selector: Selector,
+        text: str,
+        clear: bool = True,
+        method: str = "keyboard",
     ) -> dict[str, Any]:
         elem = _find_element(target, selector)
-        if clear:
-            elem.set_edit_text(text)
+        if method == "value_pattern":
+            if clear:
+                elem.set_edit_text(text)
+            else:
+                elem.type_keys(text, with_spaces=True)
         else:
+            # keyboard method — fires WPF TextChanged / bindings
+            elem.click_input()
+            if clear:
+                elem.type_keys("^a", with_spaces=False)
             elem.type_keys(text, with_spaces=True)
-        return {"typed": True, "selector": selector.describe(), "length": len(text)}
+        return {
+            "typed": True,
+            "selector": selector.describe(),
+            "length": len(text),
+            "method": method,
+        }
+
+    @staticmethod
+    def send_keys(
+        target: ResolvedTarget,
+        keys: str,
+        selector: Selector | None = None,
+    ) -> dict[str, Any]:
+        """Send keyboard keys (shortcuts, special keys) to the target.
+
+        If *selector* is provided, the matching element is focused first.
+        Otherwise the top window receives focus.
+        *keys* uses pywinauto key notation, e.g. ``"{ENTER}"``, ``"^a"`` (Ctrl+A).
+        """
+        from pywinauto.keyboard import send_keys as _send_keys
+
+        if selector and selector.to_find_kwargs():
+            elem = _find_element(target, selector)
+            elem.click_input()
+        else:
+            win = _top_window(target)
+            win.set_focus()
+        _send_keys(keys)
+        return {"sent": True, "keys": keys}
 
     @staticmethod
     def select_combo(
@@ -171,6 +223,15 @@ class UIAEngine:
     ) -> dict[str, Any]:
         from wpf_agent.uia.waits import wait_until
 
+        # For text_changed: capture initial text before polling starts
+        initial_text: str | None = None
+        if condition == "text_changed":
+            try:
+                elem = _find_element(target, selector)
+                initial_text = elem.window_text()
+            except SelectorNotFoundError:
+                initial_text = None
+
         def _check():
             try:
                 elem = _find_element(target, selector)
@@ -190,6 +251,12 @@ class UIAEngine:
             if condition == "text_contains":
                 t = elem.window_text()
                 return (value in t) or None
+            if condition == "text_not_equals":
+                t = elem.window_text()
+                return (t != value) or None
+            if condition == "text_changed":
+                t = elem.window_text()
+                return (t != initial_text) or None
             return True
 
         wait_until(
@@ -216,6 +283,8 @@ def _top_window(target: ResolvedTarget) -> UIAWrapper:
 
 def _find_element(target: ResolvedTarget, selector: Selector) -> UIAWrapper:
     """Find a single element matching the selector."""
+    from pywinauto.findwindows import ElementAmbiguousError
+
     win = _top_window(target)
     kw = selector.to_find_kwargs()
 
@@ -235,10 +304,36 @@ def _find_element(target: ResolvedTarget, selector: Selector) -> UIAWrapper:
     try:
         child = win.child_window(**kw)
         return child.wrapper_object()
+    except ElementAmbiguousError:
+        candidates = _enumerate_candidates(win, kw)
+        raise MultipleElementsFoundError(selector.describe(), candidates)
     except Exception as exc:
         raise SelectorNotFoundError(
             f"Element not found: {selector.describe()} — {exc}"
         ) from exc
+
+
+def _enumerate_candidates(
+    win: UIAWrapper, find_kwargs: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """List elements matching *find_kwargs* for error reporting."""
+    try:
+        children = win.child_window(**find_kwargs).find_all()
+    except Exception:
+        children = []
+    results = []
+    for child in children[:10]:
+        info: dict[str, Any] = {
+            "automation_id": child.element_info.automation_id or "",
+            "name": child.window_text(),
+            "control_type": child.element_info.control_type,
+        }
+        try:
+            info["rect"] = _rect_dict(child.rectangle())
+        except Exception:
+            info["rect"] = None
+        results.append(info)
+    return results
 
 
 def _walk(

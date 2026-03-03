@@ -33,6 +33,23 @@ class ReplayError(WpfAgentError):
     """Replay execution error."""
 
 
+class MultipleElementsFoundError(WpfAgentError):
+    """Multiple UI elements matched the selector — ambiguous."""
+
+    def __init__(self, selector_desc: str, candidates: list[dict]):
+        self.selector_desc = selector_desc
+        self.candidates = candidates
+        lines = [f"Multiple elements match selector: {selector_desc}"]
+        for i, c in enumerate(candidates):
+            lines.append(
+                f"  [{i}] automation_id={c.get('automation_id', '')!r} "
+                f"name={c.get('name', '')!r} "
+                f"control_type={c.get('control_type', '')} "
+                f"rect={c.get('rect')}"
+            )
+        super().__init__("\n".join(lines))
+
+
 class UserInterruptError(WpfAgentError):
     """User interrupted the operation via mouse movement or pause state."""
 

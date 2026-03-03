@@ -45,6 +45,7 @@ class WaitWindowArgs(WindowQueryArgs):
 class ListControlsArgs(WindowQueryArgs):
     depth: int = 4
     filter: Optional[str] = None
+    search: Optional[str] = None
 
 
 class ClickArgs(WindowQueryArgs):
@@ -55,6 +56,12 @@ class TypeTextArgs(WindowQueryArgs):
     selector: SelectorArg
     text: str
     clear: bool = True
+    method: str = "keyboard"  # "keyboard" or "value_pattern"
+
+
+class SendKeysArgs(WindowQueryArgs):
+    selector: Optional[SelectorArg] = None
+    keys: str
 
 
 class SelectComboArgs(WindowQueryArgs):

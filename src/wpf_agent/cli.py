@@ -386,12 +386,13 @@ def launch(exe, args):
 
 @main.command("close")
 @click.option("--pid", required=True, type=int, help="PID of the process to close")
-def close_cmd(pid):
+@click.option("--force", is_flag=True, default=False, help="Skip launched-pid check (still uses WM_CLOSE, no force-kill)")
+def close_cmd(pid, force):
     """Gracefully close a process launched by wpf-agent.
 
     Alias for `wpf-agent ui close`. Sends WM_CLOSE to the main window.
     """
-    _do_close(pid)
+    _do_close(pid, force=force)
 
 
 # ── ui ────────────────────────────────────────────────────────────
@@ -555,15 +556,16 @@ def ui_click(ctx, pid, title_re, aid, name, control_type):
 @click.option("--control-type", default=None, help="Control type")
 @click.option("--text", required=True, help="Text to type")
 @click.option("--clear/--no-clear", default=True, help="Clear field before typing")
+@click.option("--method", default="keyboard", type=click.Choice(["keyboard", "value_pattern"]), help="Input method: keyboard (fires WPF bindings) or value_pattern (fast, may skip bindings)")
 @click.pass_context
-def ui_type(ctx, pid, title_re, aid, name, control_type, text, clear):
+def ui_type(ctx, pid, title_re, aid, name, control_type, text, clear, method):
     """Type text into a UI element."""
     _run_guard(ctx, "type")
     from wpf_agent.uia.engine import UIAEngine
 
     target = _resolve_ui_target(pid, title_re)
     selector = _build_selector(aid, name, control_type)
-    result = UIAEngine.type_text(target, selector, text, clear=clear)
+    result = UIAEngine.type_text(target, selector, text, clear=clear, method=method)
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
@@ -602,6 +604,25 @@ def ui_select_combo(ctx, pid, title_re, aid, name, control_type, item):
     target = _resolve_ui_target(pid, title_re)
     selector = _build_selector(aid, name, control_type)
     result = UIAEngine.select_combo(target, selector, item)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
+@ui_cmd.command("send-keys")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Automation ID (optional, to focus element first)")
+@click.option("--name", default=None, help="Element name (optional)")
+@click.option("--control-type", default=None, help="Control type (optional)")
+@click.option("--keys", required=True, help='Keys in pywinauto notation, e.g. "{ENTER}", "^a"')
+@click.pass_context
+def ui_send_keys(ctx, pid, title_re, aid, name, control_type, keys):
+    """Send keyboard keys (shortcuts, special keys) to target window or element."""
+    _run_guard(ctx, "send-keys")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    selector = _build_selector(aid, name, control_type) if (aid or name or control_type) else None
+    result = UIAEngine.send_keys(target, keys, selector=selector)
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
@@ -736,13 +757,13 @@ def ui_alive(pid, process, brief):
             click.echo(json.dumps(result, ensure_ascii=False))
 
 
-def _do_close(pid: int) -> None:
+def _do_close(pid: int, force: bool = False) -> None:
     """Shared implementation for ``ui close`` and top-level ``close``."""
     import ctypes
 
     from wpf_agent.core.target import is_launched_pid, remove_launched_pid
 
-    if not is_launched_pid(pid):
+    if not force and not is_launched_pid(pid):
         import psutil as _ps
 
         if _ps.pid_exists(pid):
@@ -753,7 +774,8 @@ def _do_close(pid: int) -> None:
             msg = (
                 f"PID {pid} ({pname}) was not started by wpf-agent. "
                 "Only processes launched via 'wpf-agent launch' or "
-                "'wpf-agent verify' can be closed with this command."
+                "'wpf-agent verify' can be closed with this command. "
+                "Use --force to skip this check."
             )
         else:
             msg = f"PID {pid} does not exist."
@@ -781,7 +803,8 @@ def _do_close(pid: int) -> None:
     user32.EnumWindows(WNDENUMPROC(_cb), 0)
 
     if closed_hwnds:
-        remove_launched_pid(pid)
+        if is_launched_pid(pid):
+            remove_launched_pid(pid)
         click.echo(json.dumps({"closed": True, "pid": pid, "windows": len(closed_hwnds)}, ensure_ascii=False))
     else:
         click.echo(json.dumps({"closed": False, "pid": pid, "error": "No visible window found"}, ensure_ascii=False))
@@ -790,13 +813,15 @@ def _do_close(pid: int) -> None:
 
 @ui_cmd.command("close")
 @click.option("--pid", required=True, type=int, help="PID of the process to close")
-def ui_close(pid):
+@click.option("--force", is_flag=True, default=False, help="Skip launched-pid check (still uses WM_CLOSE, no force-kill)")
+def ui_close(pid, force):
     """Gracefully close a process launched by wpf-agent.
 
     Processes started via `wpf-agent launch` or `wpf-agent verify --no-close`
     can be closed.  Sends WM_CLOSE to the main window (does not force-kill).
+    Use --force to close processes not launched by wpf-agent (e.g. IDE-launched).
     """
-    _do_close(pid)
+    _do_close(pid, force=force)
 
 
 @ui_cmd.command("init-session")

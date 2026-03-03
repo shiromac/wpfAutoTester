@@ -9,7 +9,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from wpf_agent.core.errors import WpfAgentError
+from wpf_agent.core.errors import MultipleElementsFoundError, WpfAgentError
 from wpf_agent.core.target import ResolvedTarget, TargetRegistry
 from wpf_agent.uia.engine import UIAEngine
 from wpf_agent.uia.screenshot import capture_screenshot
@@ -65,6 +65,18 @@ def _ok(data: Any) -> str:
 
 def _err(msg: str) -> str:
     return json.dumps({"success": False, "error": msg}, ensure_ascii=False)
+
+
+def _err_ambiguous(exc: MultipleElementsFoundError) -> str:
+    return json.dumps(
+        {
+            "success": False,
+            "error": str(exc),
+            "error_type": "multiple_elements",
+            "candidates": exc.candidates,
+        },
+        ensure_ascii=False,
+    )
 
 
 # ── MCP Tools (13) ────────────────────────────────────────────────
@@ -127,14 +139,19 @@ def list_controls(
     target_id: str = "",
     depth: int = 4,
     filter: str = "",
+    search: str = "",
 ) -> str:
     """Enumerate UIA controls in the target window.
 
     Returns automation_id, name, control_type, enabled, visible, rect, value.
+    filter: restrict by control_type (e.g. "Button").
+    search: case-insensitive partial match on name, automation_id, or value.
     """
     try:
         t = _resolve_target(window_query or None, target_id or None)
-        data = UIAEngine.list_controls(t, depth=depth, filter_type=filter or None)
+        data = UIAEngine.list_controls(
+            t, depth=depth, filter_type=filter or None, search=search or None
+        )
         return _ok(data)
     except Exception as exc:
         return _err(str(exc))
@@ -153,6 +170,8 @@ def click(window_query: str = "", target_id: str = "", selector: dict = {}) -> s
         s = _to_selector(selector)
         data = UIAEngine.click(t, s)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
@@ -164,13 +183,43 @@ def type_text(
     selector: dict = {},
     text: str = "",
     clear: bool = True,
+    method: str = "keyboard",
 ) -> str:
-    """Type text into a UI element."""
+    """Type text into a UI element.
+
+    method: "keyboard" (default) simulates keystrokes — fires WPF TextChanged / bindings.
+    "value_pattern" uses UIA ValuePattern.SetValue — fast but may skip WPF bindings.
+    """
     try:
         t = _resolve_target(window_query or None, target_id or None)
         s = _to_selector(selector)
-        data = UIAEngine.type_text(t, s, text, clear=clear)
+        data = UIAEngine.type_text(t, s, text, clear=clear, method=method)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
+    except Exception as exc:
+        return _err(str(exc))
+
+
+@mcp.tool()
+def send_keys(
+    window_query: str = "",
+    target_id: str = "",
+    selector: dict = {},
+    keys: str = "",
+) -> str:
+    """Send keyboard keys (shortcuts, special keys) to the target.
+
+    If selector is provided, the matching element is focused first.
+    keys uses pywinauto notation: "{ENTER}", "^a" (Ctrl+A), "%{F4}" (Alt+F4), etc.
+    """
+    try:
+        t = _resolve_target(window_query or None, target_id or None)
+        s = _to_selector(selector) if selector else None
+        data = UIAEngine.send_keys(t, keys, selector=s)
+        return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
@@ -188,6 +237,8 @@ def select_combo(
         s = _to_selector(selector)
         data = UIAEngine.select_combo(t, s, item_text)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
@@ -210,6 +261,8 @@ def toggle(
             st = False
         data = UIAEngine.toggle(t, s, st)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
@@ -224,6 +277,8 @@ def read_text(
         s = _to_selector(selector)
         data = UIAEngine.read_text(t, s)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
@@ -238,6 +293,8 @@ def get_state(
         s = _to_selector(selector)
         data = UIAEngine.get_state(t, s)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
@@ -274,7 +331,8 @@ def wait_for(
 ) -> str:
     """Wait until a condition is met on a UI element.
 
-    Conditions: exists, enabled, visible, text_equals, text_contains.
+    Conditions: exists, enabled, visible, text_equals, text_contains,
+    text_not_equals, text_changed.
     """
     try:
         t = _resolve_target(window_query or None, target_id or None)
@@ -287,6 +345,8 @@ def wait_for(
             v = False
         data = UIAEngine.wait_for(t, s, condition, v, timeout_ms)
         return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
     except Exception as exc:
         return _err(str(exc))
 
