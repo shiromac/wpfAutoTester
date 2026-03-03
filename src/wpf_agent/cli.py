@@ -477,17 +477,19 @@ def ui_screenshot(pid, title_re, save_path):
 @click.option("--depth", default=4, type=int, help="Traversal depth")
 @click.option("--type-filter", default=None, help="Filter by control_type (comma-separated, e.g. Button,Edit,ComboBox)")
 @click.option("--name-filter", default=None, help="Filter by name (substring match, case-insensitive)")
+@click.option("--aid-filter", default=None, help="Filter by automation_id (substring match, case-insensitive)")
+@click.option("--search", default=None, help="Search name, automation_id, and value (substring match, case-insensitive)")
 @click.option("--has-name", is_flag=True, default=False, help="Only show controls with non-empty name")
 @click.option("--has-aid", is_flag=True, default=False, help="Only show controls with non-empty automation_id")
 @click.option("--brief", is_flag=True, default=False, help="Compact table output instead of JSON")
-def ui_controls(pid, title_re, depth, type_filter, name_filter, has_name, has_aid, brief):
+def ui_controls(pid, title_re, depth, type_filter, name_filter, aid_filter, search, has_name, has_aid, brief):
     """List UI controls as JSON (or brief table with --brief)."""
     import re
 
     from wpf_agent.uia.engine import UIAEngine
 
     target = _resolve_ui_target(pid, title_re)
-    controls = UIAEngine.list_controls(target, depth=depth)
+    controls = UIAEngine.list_controls(target, depth=depth, search=search or None)
 
     # Apply filters
     if type_filter:
@@ -497,6 +499,10 @@ def ui_controls(pid, title_re, depth, type_filter, name_filter, has_name, has_ai
     if name_filter:
         pattern = re.compile(re.escape(name_filter), re.IGNORECASE)
         controls = [c for c in controls if pattern.search(c.get("name", ""))]
+
+    if aid_filter:
+        aid_pattern = re.compile(re.escape(aid_filter), re.IGNORECASE)
+        controls = [c for c in controls if aid_pattern.search(c.get("automation_id", ""))]
 
     if has_name:
         controls = [c for c in controls if c.get("name", "").strip()]

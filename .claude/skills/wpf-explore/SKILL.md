@@ -54,8 +54,16 @@ wpf-agent ui controls --pid <pid> --depth 4
 wpf-agent ui controls --pid <pid> --depth 4 --has-aid --brief
 wpf-agent ui controls --pid <pid> --depth 6 --type-filter ListItem,TreeItem,DataItem --brief
 wpf-agent ui controls --pid <pid> --depth 4 --type-filter Button,Edit,ComboBox --has-name --brief
+
+# 検索 (name, automation_id, value を横断して部分一致)
+wpf-agent ui controls --pid <pid> --search "Add" --brief
+wpf-agent ui controls --pid <pid> --search "Save" --type-filter Button --brief
+
+# automation_id で絞り込み
+wpf-agent ui controls --pid <pid> --aid-filter "Btn" --brief
 ```
-フィルタオプション: `--type-filter` (カンマ区切り), `--name-filter` (部分一致), `--has-name`, `--has-aid`, `--brief` (テーブル出力)。
+フィルタオプション: `--search` (name/aid/value 横断部分一致), `--type-filter` (カンマ区切り), `--name-filter` (name部分一致), `--aid-filter` (automation_id部分一致), `--has-name`, `--has-aid`, `--brief` (テーブル出力)。
+**重要**: `| python -c "..."` のようなパイプは使わないこと。パイプ付きコマンドは `Bash(wpf-agent *)` パーミッションにマッチせず、毎回権限確認が発生する。
 
 #### d. 次の操作を判断
 - まだ触っていないボタン、メニュー、タブを優先
