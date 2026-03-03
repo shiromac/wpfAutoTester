@@ -239,8 +239,11 @@ UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionC
 
 ユーザーが以下のような自然言語で依頼した場合、**対応するスキルまたは `wpf-agent ui` コマンドを使って実行すること**。スラッシュコマンドを知らないユーザーでも自然に使えるようにする。
 
+**重要**: 「wpf-agent で〇〇して」「wpf-agent を使って〇〇」のように **`wpf-agent` が明示されている場合は、必ず `wpf-agent` のコマンドやスキルを使って実行すること**。他のツールや手段で代替しない。
+
 | ユーザーの発言（例） | 実行すべきアクション |
 |---------------------|---------------------|
+| 「デバッグして」「wpf-agentでデバッグ」「動かして確認」 | 対象アプリを `wpf-agent launch` で起動し、`/wpf-explore` で探索。exe パスが不明ならプロファイルか会話から推定、それでも不明なら聞く |
 | 「動作確認して」「テストして」「確認して」 | `/wpf-verify` を実行（exe パスが不明なら聞く）。起動済みなら `/wpf-explore` で探索 |
 | 「画面を見て」「UI を確認して」「スクショ撮って」 | `/wpf-inspect` を実行 |
 | 「探索テストして」「全部触って」 | `/wpf-explore` を実行 |
@@ -251,9 +254,13 @@ UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionC
 | 「チケット整理して」 | `/wpf-ticket-triage` を実行 |
 | 「〇〇に入力して」「テキストを入れて」 | `/wpf-type` を実行。**python/xdotool で直接入力しない** |
 | 「〇〇の値を読んで」「テキストを取得して」 | `wpf-agent ui read --pid <pid> --aid <id>` を実行。**python で直接読み取らない** |
+| 「〇〇をクリックして」「ボタン押して」 | `/wpf-click` を実行 |
+| 「起動して」「アプリを立ち上げて」 | `wpf-agent launch --exe <path>` で起動 |
+| 「閉じて」「終了して」 | `wpf-agent ui close --pid <pid>` で終了 |
 
 ### 判断のフロー
-1. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
-2. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
-3. 起動済みなら `wpf-agent ui` コマンドや `/wpf-explore` で直接操作
-4. 未起動なら `/wpf-verify --exe <path>` で起動＋検証、または `wpf-agent launch` で起動してから操作
+1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
+2. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
+3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
+4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-explore` で直接操作
+5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-verify --exe <path>` を使う

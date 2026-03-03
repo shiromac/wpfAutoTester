@@ -43,7 +43,7 @@ pip install -e .[dev]
 claude mcp remove wpf-agent
 claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
 
-# 4. Re-install skills (updates slash commands)
+# 4. Re-install skills (updates slash commands AND CLAUDE.md wpf-agent section)
 wpf-agent install-skills
 ```
 

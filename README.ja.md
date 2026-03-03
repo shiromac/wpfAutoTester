@@ -43,7 +43,7 @@ pip install -e .[dev]
 claude mcp remove wpf-agent
 claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
 
-# 4. スキルを再インストール（スラッシュコマンドを更新）
+# 4. スキルを再インストール（スラッシュコマンド + CLAUDE.md の wpf-agent セクションを更新）
 wpf-agent install-skills
 ```
 
