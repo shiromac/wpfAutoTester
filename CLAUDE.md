@@ -233,7 +233,7 @@ python -m pytest tests/ -v
 
 ### 変更時の同期チェックリスト
 CLI オプションや CLAUDE.md の内容を変更した場合、以下のファイルも同期すること:
-1. **`src/wpf_agent/_claude_md_snippet.md`** — `wpf-agent init` で生成される CLAUDE.md の元テンプレート。ここを更新しないと新規ユーザーに変更が伝わらない
+1. **`src/wpf_agent/_claude_md_snippet.md`** — `wpf-agent init` 実行時にユーザーの CLAUDE.md へ `<!-- wpf-agent:start -->...<!-- wpf-agent:end -->` として埋め込まれるテンプレート。ここを更新しないと新規セットアップ時に古い情報が配布される
 2. **`.claude/skills/` 内の該当 SKILL.md** — 変更に関連するスキルのコード例・説明を更新
 
 ## テストアプリ (testApp)
