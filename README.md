@@ -28,6 +28,36 @@ cd wpfAutoTester
 pip install -e .[dev]
 ```
 
+## Reinstalling / Upgrading
+
+If you already have wpf-agent installed and want to update to the latest version:
+
+```bash
+# 1. Pull latest code (for development installs)
+git pull origin main
+
+# 2. Reinstall the package (picks up new dependencies and entry points)
+pip install -e .[dev]
+
+# 3. Re-register the MCP server (picks up new/changed tools)
+claude mcp remove wpf-agent
+claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
+
+# 4. Re-install skills (updates slash commands)
+wpf-agent install-skills
+```
+
+> **Note:** Your `profiles.json` and `personas.json` are preserved — `wpf-agent init` only creates them if they don't exist, so it's safe to re-run if needed.
+
+For pip-only installs (non-development):
+
+```bash
+pip install --upgrade git+https://github.com/shiromac/wpfAutoTester.git
+claude mcp remove wpf-agent
+claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
+wpf-agent install-skills
+```
+
 ## Quick Start
 
 ```bash
@@ -155,9 +185,10 @@ CLI commands for Claude Code to operate UI directly via Bash. No ANTHROPIC_API_K
 ```bash
 wpf-agent ui focus --pid <pid>                          # Focus window
 wpf-agent ui click --pid <pid> --aid <id>               # Click element
-wpf-agent ui type --pid <pid> --aid <id> --text "..."   # Type text
+wpf-agent ui type --pid <pid> --aid <id> --text "..."   # Type text (keyboard method, fires WPF bindings)
+wpf-agent ui send-keys --pid <pid> --keys "{ENTER}"     # Send keyboard shortcuts
 wpf-agent ui toggle --pid <pid> --aid <id>              # Toggle checkbox
-wpf-agent ui close --pid <pid>                          # Graceful close (wpf-agent-started only)
+wpf-agent ui close --pid <pid> [--force]                # Graceful close (--force skips launch check)
 ```
 
 ### Read-Only Commands (always available, even when paused)
@@ -203,7 +234,7 @@ Action commands (`focus`, `click`, `type`, `toggle`) sample mouse position for 5
 - Read-only commands remain available during pause
 - Resume with `wpf-agent ui resume`
 
-## MCP Tools (13)
+## MCP Tools (14)
 
 | Tool | Description |
 |------|-------------|
@@ -211,15 +242,16 @@ Action commands (`focus`, `click`, `type`, `toggle`) sample mouse position for 5
 | `resolve_target` | Resolve app by PID/process/exe/title regex |
 | `focus_window` | Bring window to front |
 | `wait_window` | Wait for window appearance |
-| `list_controls` | Enumerate UIA controls |
+| `list_controls` | Enumerate UIA controls (supports `search` for name/aid/value partial match) |
 | `click` | Click a UI element |
-| `type_text` | Type text into element |
+| `type_text` | Type text into element (`method`: `"keyboard"` or `"value_pattern"`) |
+| `send_keys` | Send keyboard shortcuts (e.g. `"{ENTER}"`, `"^a"`) |
 | `select_combo` | Select combo box item |
 | `toggle` | Toggle checkbox/button |
 | `read_text` | Read element text |
 | `get_state` | Get element state |
 | `screenshot` | Capture screenshot |
-| `wait_for` | Wait for UI condition |
+| `wait_for` | Wait for UI condition (`text_not_equals`, `text_changed` supported) |
 
 ## VS Code Copilot Installation
 
@@ -333,7 +365,7 @@ wpf-agent personas remove yamada
 src/wpf_agent/
   core/       # target registry, session, safety, errors
   uia/        # UIA engine, selector, snapshot, screenshot, waits
-  mcp/        # FastMCP server (13 tools), Pydantic types
+  mcp/        # FastMCP server (14 tools), Pydantic types
   runner/     # agent loop, replay, logging
   testing/    # scenario, random tester, assertions, oracles, minimizer
   tickets/    # generator, templates, evidence

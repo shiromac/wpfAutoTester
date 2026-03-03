@@ -77,7 +77,7 @@ claude mcp list
 
 `wpf-agent` が表示されれば成功です。
 
-### MCP サーバーで使えるようになるツール（13個）
+### MCP サーバーで使えるようになるツール（14個）
 
 Claude Code のチャット内から直接呼び出せるようになります:
 
@@ -86,15 +86,16 @@ list_windows        — デスクトップ上のウィンドウ一覧
 resolve_target      — アプリを PID/プロセス名/タイトル等で特定
 focus_window        — ウィンドウを前面に
 wait_window         — ウィンドウの出現を待機
-list_controls       — UI コントロール一覧を取得
+list_controls       — UI コントロール一覧を取得 (search で部分一致検索可)
 click               — ボタン等をクリック
-type_text           — テキスト入力
+type_text           — テキスト入力 (method: keyboard / value_pattern)
+send_keys           — キーボードショートカット送信 ("{ENTER}", "^a" 等)
 select_combo        — コンボボックス選択
 toggle              — チェックボックス切替
 read_text           — テキスト読み取り
 get_state           — 要素の状態取得
 screenshot          — スクリーンショット撮影
-wait_for            — 条件を満たすまで待機
+wait_for            — 条件を満たすまで待機 (text_not_equals, text_changed 対応)
 ```
 
 ---

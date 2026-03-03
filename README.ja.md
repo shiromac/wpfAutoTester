@@ -28,6 +28,36 @@ cd wpfAutoTester
 pip install -e .[dev]
 ```
 
+## 再インストール / アップグレード
+
+既にインストール済みの環境を最新版に更新する場合:
+
+```bash
+# 1. 最新コードを取得（開発用インストールの場合）
+git pull origin main
+
+# 2. パッケージを再インストール（新しい依存関係やエントリポイントを反映）
+pip install -e .[dev]
+
+# 3. MCP サーバーを再登録（新規・変更ツールを反映）
+claude mcp remove wpf-agent
+claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
+
+# 4. スキルを再インストール（スラッシュコマンドを更新）
+wpf-agent install-skills
+```
+
+> **Note:** `profiles.json` と `personas.json` は保持されます。`wpf-agent init` はファイルが存在しない場合のみ作成するため、再実行しても安全です。
+
+pip 経由でインストールした場合:
+
+```bash
+pip install --upgrade git+https://github.com/shiromac/wpfAutoTester.git
+claude mcp remove wpf-agent
+claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
+wpf-agent install-skills
+```
+
 ## クイックスタート
 
 ```bash
@@ -161,9 +191,13 @@ Claude Code が Bash 経由で直接 UI を操作するコマンド群。ANTHROP
 ```bash
 wpf-agent ui focus --pid <pid>                          # ウィンドウフォーカス
 wpf-agent ui click --pid <pid> --aid <id>               # クリック
-wpf-agent ui type --pid <pid> --aid <id> --text "..."   # テキスト入力
+wpf-agent ui type --pid <pid> --aid <id> --text "..."   # テキスト入力 (keyboard がデフォルト、WPF バインディング発火)
+wpf-agent ui type --pid <pid> --aid <id> --text "..." --method value_pattern  # 高速だが WPF バインディングが発火しない場合あり
+wpf-agent ui send-keys --pid <pid> --keys "{ENTER}"     # キーボードショートカット送信
+wpf-agent ui send-keys --pid <pid> --aid <id> --keys "^a"  # 要素にフォーカスしてからキー送信
 wpf-agent ui toggle --pid <pid> --aid <id>              # トグル
 wpf-agent ui close --pid <pid>                          # WM_CLOSE で終了 (wpf-agent 起動プロセスのみ)
+wpf-agent ui close --pid <pid> --force                  # 起動元チェックをスキップして WM_CLOSE で終了
 ```
 
 ### 読み取り系コマンド（一時停止中も使用可）
@@ -203,13 +237,13 @@ wpf-agent ui --no-guard click --pid ...                 # ガードスキップ
 
 ## UI ガード（マウス移動検知）
 
-操作系コマンド (`focus`, `click`, `type`, `toggle`) は実行前にマウス位置を 50ms サンプリング。ユーザーのマウス移動 (>2px) を検出すると操作を中断し、持続的な一時停止状態に移行。
+操作系コマンド (`focus`, `click`, `type`, `send-keys`, `toggle`) は実行前にマウス位置を 50ms サンプリング。ユーザーのマウス移動 (>2px) を検出すると操作を中断し、持続的な一時停止状態に移行。
 
 - 中断時: exit code 2 + JSON 出力（理由付き）
 - 読み取り系コマンドは一時停止中も実行可能
 - `wpf-agent ui resume` で再開
 
-## MCP ツール一覧（13個）
+## MCP ツール一覧（14個）
 
 | ツール | 説明 |
 |--------|------|
@@ -217,15 +251,16 @@ wpf-agent ui --no-guard click --pid ...                 # ガードスキップ
 | `resolve_target` | PID / プロセス名 / EXEパス / タイトル正規表現でアプリを特定 |
 | `focus_window` | 対象ウィンドウを最前面に移動 |
 | `wait_window` | ウィンドウの出現を待機 |
-| `list_controls` | UIA コントロールツリーを列挙 |
+| `list_controls` | UIA コントロールツリーを列挙（`search` で name/aid/value 部分一致検索可） |
 | `click` | UI 要素をクリック |
-| `type_text` | UI 要素にテキストを入力 |
+| `type_text` | UI 要素にテキストを入力（`method`: `"keyboard"` / `"value_pattern"`） |
+| `send_keys` | キーボードショートカット送信（例: `"{ENTER}"`, `"^a"`） |
 | `select_combo` | コンボボックスの項目を選択 |
 | `toggle` | チェックボックス / トグルボタンの切り替え |
 | `read_text` | UI 要素のテキストを読み取り |
 | `get_state` | UI 要素の状態を取得 |
 | `screenshot` | スクリーンショットを撮影 |
-| `wait_for` | UI 条件の成立を待機 |
+| `wait_for` | UI 条件の成立を待機（`text_not_equals`, `text_changed` 対応） |
 
 ## VS Code Copilot でのインストール
 
@@ -385,7 +420,7 @@ steps:
 src/wpf_agent/
   core/       # ターゲットレジストリ、セッション管理、安全チェック、例外
   uia/        # UIAEngine、セレクタ、スナップショット、スクリーンショット、待機
-  mcp/        # FastMCP サーバー (13ツール)、Pydantic 型定義
+  mcp/        # FastMCP サーバー (14ツール)、Pydantic 型定義
   runner/     # エージェントループ、リプレイ、構造化ログ
   testing/    # シナリオテスト、ランダムテスト、アサーション、障害オラクル、最小化
   tickets/    # チケット生成、テンプレート、証跡収集
