@@ -1,4 +1,6 @@
 <!-- wpf-agent:start -->
+<!-- NOTE: このスニペットは wpf-agent init で CLAUDE.md に埋め込まれる。
+     CLAUDE.md やスキルの内容を変更した場合、このファイルも必ず同期すること。 -->
 ## WPF UI Debug Automation Agent (wpf-agent)
 
 Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作する。
