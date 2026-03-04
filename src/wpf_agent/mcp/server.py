@@ -1,4 +1,4 @@
-"""FastMCP server exposing 13 UIA tools."""
+"""FastMCP server exposing 15 UIA tools."""
 
 from __future__ import annotations
 
@@ -169,6 +169,31 @@ def click(window_query: str = "", target_id: str = "", selector: dict = {}) -> s
         t = _resolve_target(window_query or None, target_id or None)
         s = _to_selector(selector)
         data = UIAEngine.click(t, s)
+        return _ok(data)
+    except MultipleElementsFoundError as exc:
+        return _err_ambiguous(exc)
+    except Exception as exc:
+        return _err(str(exc))
+
+
+@mcp.tool()
+def drag(
+    window_query: str = "",
+    target_id: str = "",
+    src_selector: dict = {},
+    dst_selector: dict = {},
+) -> str:
+    """Drag from one UI element to another.
+
+    Performs a mouse press on the centre of src_selector, moves to the centre
+    of dst_selector, then releases.  Useful for drag-and-drop, slider
+    manipulation, reordering list items, etc.
+    """
+    try:
+        t = _resolve_target(window_query or None, target_id or None)
+        ss = _to_selector(src_selector)
+        ds = _to_selector(dst_selector)
+        data = UIAEngine.drag(t, ss, ds)
         return _ok(data)
     except MultipleElementsFoundError as exc:
         return _err_ambiguous(exc)

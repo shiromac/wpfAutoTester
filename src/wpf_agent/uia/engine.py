@@ -100,6 +100,42 @@ class UIAEngine:
         return {"clicked": True, "selector": selector.describe()}
 
     @staticmethod
+    def drag(
+        target: ResolvedTarget,
+        src_selector: Selector,
+        dst_selector: Selector,
+    ) -> dict[str, Any]:
+        """Drag from one element to another using mouse input.
+
+        Resolves the centre point of *src_selector* and *dst_selector*, then
+        performs a press → move → release sequence via ``pywinauto.mouse``.
+        """
+        from pywinauto import mouse
+
+        src = _find_element(target, src_selector)
+        dst = _find_element(target, dst_selector)
+
+        src_rect = src.rectangle()
+        dst_rect = dst.rectangle()
+
+        sx = (src_rect.left + src_rect.right) // 2
+        sy = (src_rect.top + src_rect.bottom) // 2
+        dx = (dst_rect.left + dst_rect.right) // 2
+        dy = (dst_rect.top + dst_rect.bottom) // 2
+
+        mouse.press(coords=(sx, sy))
+        mouse.move(coords=(dx, dy))
+        mouse.release(coords=(dx, dy))
+
+        return {
+            "dragged": True,
+            "src_selector": src_selector.describe(),
+            "dst_selector": dst_selector.describe(),
+            "src_point": {"x": sx, "y": sy},
+            "dst_point": {"x": dx, "y": dy},
+        }
+
+    @staticmethod
     def type_text(
         target: ResolvedTarget,
         selector: Selector,

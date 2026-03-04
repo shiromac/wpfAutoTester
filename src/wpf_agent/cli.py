@@ -554,6 +554,28 @@ def ui_click(ctx, pid, title_re, aid, name, control_type):
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
+@ui_cmd.command("drag")
+@click.option("--pid", default=None, type=int, help="Target process ID")
+@click.option("--title-re", default=None, help="Window title regex")
+@click.option("--aid", default=None, help="Source element automation ID")
+@click.option("--name", default=None, help="Source element name")
+@click.option("--control-type", default=None, help="Source element control type")
+@click.option("--dst-aid", default=None, help="Destination element automation ID")
+@click.option("--dst-name", default=None, help="Destination element name")
+@click.option("--dst-control-type", default=None, help="Destination element control type")
+@click.pass_context
+def ui_drag(ctx, pid, title_re, aid, name, control_type, dst_aid, dst_name, dst_control_type):
+    """Drag from one UI element to another."""
+    _run_guard(ctx, "drag")
+    from wpf_agent.uia.engine import UIAEngine
+
+    target = _resolve_ui_target(pid, title_re)
+    src_selector = _build_selector(aid, name, control_type)
+    dst_selector = _build_selector(dst_aid, dst_name, dst_control_type)
+    result = UIAEngine.drag(target, src_selector, dst_selector)
+    click.echo(json.dumps(result, ensure_ascii=False))
+
+
 @ui_cmd.command("type")
 @click.option("--pid", default=None, type=int, help="Target process ID")
 @click.option("--title-re", default=None, help="Window title regex")
