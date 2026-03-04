@@ -63,7 +63,8 @@ wpf-agent ui controls --pid <pid> --search "Save" --type-filter Button --brief
 wpf-agent ui controls --pid <pid> --aid-filter "Btn" --brief
 ```
 フィルタオプション: `--search` (name/aid/value 横断部分一致), `--type-filter` (カンマ区切り), `--name-filter` (name部分一致), `--aid-filter` (automation_id部分一致), `--has-name`, `--has-aid`, `--brief` (テーブル出力)。
-**重要**: `| python -c "..."` のようなパイプは使わないこと。パイプ付きコマンドは `Bash(wpf-agent *)` パーミッションにマッチせず、毎回権限確認が発生する。
+`--search`, `--name-filter`, `--aid-filter` はカンマ区切りで OR 検索可能（例: `--name-filter "OK,FAIL,SKIP,終端"`）。
+**重要**: `| python -c "..."` のようなパイプや `for ... do ... done` のようなシェルループは使わないこと。glob パーミッション `Bash(wpf-agent *)` にマッチせず、毎回権限確認が発生する。各コマンドを個別に実行すること。
 
 #### d. 次の操作を判断
 - まだ触っていないボタン、メニュー、タブを優先
