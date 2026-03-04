@@ -77,12 +77,15 @@ class UIAEngine:
         controls: list[dict[str, Any]] = []
         _walk(win, controls, depth=depth, current=0, filter_type=filter_type)
         if search:
-            q = search.lower()
+            queries = [s.strip().lower() for s in search.split(",") if s.strip()]
             controls = [
                 c for c in controls
-                if q in (c.get("automation_id") or "").lower()
-                or q in (c.get("name") or "").lower()
-                or q in (c.get("value") or "").lower()
+                if any(
+                    q in (c.get("automation_id") or "").lower()
+                    or q in (c.get("name") or "").lower()
+                    or q in (c.get("value") or "").lower()
+                    for q in queries
+                )
             ]
         return controls[:MAX_CONTROLS]
 

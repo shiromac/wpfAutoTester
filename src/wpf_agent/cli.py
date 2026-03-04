@@ -476,9 +476,9 @@ def ui_screenshot(pid, title_re, save_path):
 @click.option("--title-re", default=None, help="Window title regex")
 @click.option("--depth", default=4, type=int, help="Traversal depth")
 @click.option("--type-filter", default=None, help="Filter by control_type (comma-separated, e.g. Button,Edit,ComboBox)")
-@click.option("--name-filter", default=None, help="Filter by name (substring match, case-insensitive)")
-@click.option("--aid-filter", default=None, help="Filter by automation_id (substring match, case-insensitive)")
-@click.option("--search", default=None, help="Search name, automation_id, and value (substring match, case-insensitive)")
+@click.option("--name-filter", default=None, help="Filter by name (comma-separated OR, substring match, case-insensitive)")
+@click.option("--aid-filter", default=None, help="Filter by automation_id (comma-separated OR, substring match, case-insensitive)")
+@click.option("--search", default=None, help="Search name, automation_id, and value (comma-separated OR, substring match, case-insensitive)")
 @click.option("--has-name", is_flag=True, default=False, help="Only show controls with non-empty name")
 @click.option("--has-aid", is_flag=True, default=False, help="Only show controls with non-empty automation_id")
 @click.option("--brief", is_flag=True, default=False, help="Compact table output instead of JSON")
@@ -497,12 +497,12 @@ def ui_controls(pid, title_re, depth, type_filter, name_filter, aid_filter, sear
         controls = [c for c in controls if c.get("control_type", "") in allowed_types]
 
     if name_filter:
-        pattern = re.compile(re.escape(name_filter), re.IGNORECASE)
-        controls = [c for c in controls if pattern.search(c.get("name", ""))]
+        name_terms = [t.strip().lower() for t in name_filter.split(",") if t.strip()]
+        controls = [c for c in controls if any(t in (c.get("name") or "").lower() for t in name_terms)]
 
     if aid_filter:
-        aid_pattern = re.compile(re.escape(aid_filter), re.IGNORECASE)
-        controls = [c for c in controls if aid_pattern.search(c.get("automation_id", ""))]
+        aid_terms = [t.strip().lower() for t in aid_filter.split(",") if t.strip()]
+        controls = [c for c in controls if any(t in (c.get("automation_id") or "").lower() for t in aid_terms)]
 
     if has_name:
         controls = [c for c in controls if c.get("name", "").strip()]

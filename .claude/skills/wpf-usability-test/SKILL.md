@@ -142,8 +142,11 @@ wpf-agent ui controls --pid <pid> --depth 4 --has-aid --brief
 
 # 特定の要素を検索する場合 (name/aid/value 横断の部分一致)
 wpf-agent ui controls --pid <pid> --search "検索語" --brief
+
+# 複数キーワードで OR 検索 (カンマ区切り)
+wpf-agent ui controls --pid <pid> --name-filter "OK,FAIL,エラー" --brief
 ```
-一覧からステップ b で選んだ要素に対応する `automation_id` を探す。`--search` で絞り込むと効率的。見つからない場合は `--name` + `--control-type` で指定する。
+一覧からステップ b で選んだ要素に対応する `automation_id` を探す。`--search` で絞り込むと効率的。カンマ区切りで複数キーワードの OR 検索も可能。見つからない場合は `--name` + `--control-type` で指定する。
 
 ### d. 操作を実行
 
