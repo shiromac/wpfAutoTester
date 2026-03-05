@@ -94,10 +94,10 @@ class UIAEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def click(target: ResolvedTarget, selector: Selector) -> dict[str, Any]:
+    def click(target: ResolvedTarget, selector: Selector, *, double: bool = False) -> dict[str, Any]:
         elem = _find_element(target, selector)
-        elem.click_input()
-        return {"clicked": True, "selector": selector.describe()}
+        elem.click_input(double=double)
+        return {"clicked": True, "double": double, "selector": selector.describe()}
 
     @staticmethod
     def drag(

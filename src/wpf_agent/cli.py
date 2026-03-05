@@ -559,15 +559,16 @@ def ui_focus(ctx, pid, title_re):
 @click.option("--aid", default=None, help="Automation ID")
 @click.option("--name", default=None, help="Element name")
 @click.option("--control-type", default=None, help="Control type")
+@click.option("--double", is_flag=True, default=False, help="Double-click instead of single click")
 @click.pass_context
-def ui_click(ctx, pid, title_re, aid, name, control_type):
+def ui_click(ctx, pid, title_re, aid, name, control_type, double):
     """Click a UI element."""
     _run_guard(ctx, "click")
     from wpf_agent.uia.engine import UIAEngine
 
     target = _resolve_ui_target(pid, title_re)
     selector = _build_selector(aid, name, control_type)
-    result = UIAEngine.click(target, selector)
+    result = UIAEngine.click(target, selector, double=double)
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
