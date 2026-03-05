@@ -178,6 +178,9 @@ def _run_action(
         UIAEngine.select_combo(target, selector, args.get("item_text", ""))
     elif action == "toggle":
         UIAEngine.toggle(target, selector, args.get("state"))
+    elif action == "drag":
+        dst_sel = Selector(**args.get("dst_selector", {}))
+        UIAEngine.drag(target, selector, dst_sel)
     elif action == "focus_window":
         UIAEngine.focus_window(target)
     elif action == "wait_for":
