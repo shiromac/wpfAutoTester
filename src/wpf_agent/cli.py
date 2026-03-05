@@ -55,8 +55,9 @@ def init():
 def install_skills(target, github, no_claude_md, yes):
     """Install Claude Code slash-command skills into .claude/skills/.
 
-    Copies bundled skill files (/wpf-explore, /wpf-verify, etc.) so that
-    Claude Code auto-detects them when launched from this directory.
+    Copies bundled skill files (/wpf-setup, /wpf-ui, /wpf-test, /wpf-ticket)
+    so that Claude Code auto-detects them when launched from this directory.
+    Obsolete wpf-* skills not in the current bundle are automatically removed.
 
     Also appends a wpf-agent guide section to CLAUDE.md (with confirmation).
     Use --no-claude-md to skip the CLAUDE.md update.
@@ -110,6 +111,22 @@ def install_skills(target, github, no_claude_md, yes):
         else:
             click.echo("No skills found to install.", err=True)
             sys.exit(1)
+
+        # Clean up obsolete wpf- skills not in source
+        if dest_skills.is_dir():
+            bundled_names = set(installed)
+            removed = []
+            for existing in sorted(dest_skills.iterdir()):
+                if not existing.is_dir():
+                    continue
+                if existing.name.startswith("wpf-") and existing.name not in bundled_names:
+                    import shutil
+                    shutil.rmtree(existing)
+                    removed.append(existing.name)
+            if removed:
+                click.echo(f"Removed {len(removed)} obsolete skills:")
+                for name in removed:
+                    click.echo(f"  /{name}")
 
     # ── Update CLAUDE.md with wpf-agent guide ──
     if not no_claude_md:

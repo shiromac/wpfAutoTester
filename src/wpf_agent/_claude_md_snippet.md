@@ -105,18 +105,9 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 
 ### カスタムスキル (スラッシュコマンド)
 - `/wpf-setup` — セットアップとMCPサーバー登録
-- `/wpf-inspect` — UI調査 (ウィンドウ+コントロール一覧+スクリーンショット)
-- `/wpf-click` — 要素クリック+検証
-- `/wpf-type` — テキスト入力+検証
-- `/wpf-scenario` — シナリオテスト実行/YAML作成
-- `/wpf-random` — ランダム探索テスト
-- `/wpf-explore` — AI誘導型探索テスト (Claude Code 直接 UI 操作)
-- `/wpf-verify` — ビルド後自動検証 (起動→スモークテスト→UIチェック→レポート)
-- `/wpf-replay` — AI不要リプレイ再現
-- `/wpf-ticket` — チケット確認・分析
-- `/wpf-ticket-create` — 問題チケット作成 (ticket.md + エビデンス収集)
-- `/wpf-usability-test` — ペルソナ型ユーザビリティテスト（思考発話法 + ゴール指向）
-- `/wpf-ticket-triage` — チケット整理 (fix / wontfix に分類・移動)
+- `/wpf-ui` — UI操作（調査・クリック・入力・スクリーンショット）
+- `/wpf-test` — テスト実行（探索・ランダム・シナリオ・ユーザビリティ・検証・リプレイ）
+- `/wpf-ticket` — チケット管理（確認・作成・整理）
 
 ### セレクタの優先順位
 1. `automation_id` (最も安定)
@@ -131,18 +122,19 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 
 | ユーザーの発言（例） | 実行すべきアクション |
 |---------------------|---------------------|
-| 「デバッグして」「wpf-agentでデバッグ」「動かして確認」 | 対象アプリを `wpf-agent launch` で起動し、`/wpf-explore` で探索。exe パスが不明ならプロファイルか会話から推定、それでも不明なら聞く |
-| 「動作確認して」「テストして」「確認して」 | `/wpf-verify` を実行（exe パスが不明なら聞く）。起動済みなら `/wpf-explore` で探索 |
-| 「画面を見て」「UI を確認して」「スクショ撮って」 | `/wpf-inspect` を実行 |
-| 「探索テストして」「全部触って」 | `/wpf-explore` を実行 |
-| 「ユーザビリティテストして」「ペルソナテストして」 | `/wpf-usability-test` を実行 |
-| 「ランダムテストして」 | `/wpf-random` を実行 |
-| 「シナリオテストして」 | `/wpf-scenario` を実行 |
+| 「デバッグして」「wpf-agentでデバッグ」「動かして確認」 | 対象アプリを `wpf-agent launch` で起動し、`/wpf-test explore` で探索。exe パスが不明ならプロファイルか会話から推定、それでも不明なら聞く |
+| 「動作確認して」「テストして」「確認して」 | `/wpf-test verify` を実行（exe パスが不明なら聞く）。起動済みなら `/wpf-test explore` で探索 |
+| 「画面を見て」「UI を確認して」「スクショ撮って」 | `/wpf-ui inspect` を実行 |
+| 「探索テストして」「全部触って」 | `/wpf-test explore` を実行 |
+| 「ユーザビリティテストして」「ペルソナテストして」 | `/wpf-test usability` を実行 |
+| 「ランダムテストして」 | `/wpf-test random` を実行 |
+| 「シナリオテストして」 | `/wpf-test scenario` を実行 |
 | 「チケット見せて」「バグ一覧」 | `/wpf-ticket` を実行 |
-| 「チケット整理して」 | `/wpf-ticket-triage` を実行 |
-| 「〇〇に入力して」「テキストを入れて」 | `/wpf-type` を実行。**python/xdotool で直接入力しない** |
+| 「チケット作成して」 | `/wpf-ticket create` を実行 |
+| 「チケット整理して」 | `/wpf-ticket triage` を実行 |
+| 「〇〇に入力して」「テキストを入れて」 | `/wpf-ui type` を実行。**python/xdotool で直接入力しない** |
 | 「〇〇の値を読んで」「テキストを取得して」 | `wpf-agent ui read --pid <pid> --aid <id>` を実行。**python で直接読み取らない** |
-| 「〇〇をクリックして」「ボタン押して」 | `/wpf-click` を実行 |
+| 「〇〇をクリックして」「ボタン押して」 | `/wpf-ui click` を実行 |
 | 「ドラッグして」「〇〇を〇〇に移動して」 | `wpf-agent ui drag --pid <pid> --aid <src> --dst-aid <dst>` を実行 |
 | 「起動して」「アプリを立ち上げて」 | `wpf-agent launch --exe <path>` で起動 |
 | 「閉じて」「終了して」 | `wpf-agent ui close --pid <pid>` で終了 |
@@ -151,6 +143,6 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
 2. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
 3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
-4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-explore` で直接操作
-5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-verify --exe <path>` を使う
+4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
+5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う
 <!-- wpf-agent:end -->
