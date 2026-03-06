@@ -121,6 +121,8 @@ wpf-agent random run --profile <profile> --max-steps <steps> --seed <seed>
 
 ## scenario モード（シナリオテスト）
 
+**重要**: シナリオ YAML の書き方は `scenarios/GUIDE.md` にリファレンスがある。シナリオの作成・編集時は必ず Read ツールでこのガイドを読んでから作業すること。
+
 ### 方法A: YAMLファイルからの実行
 ```bash
 wpf-agent scenario run --file <scenario.yaml> --profile <profile>
@@ -134,9 +136,10 @@ wpf-agent scenario run --file <scenario.yaml> --profile <profile>
 5. 全ステップのアクション記録をJSON形式で出力
 
 ### 方法C: シナリオYAMLの生成
-1. 対象アプリのUIを `list_controls` で調査
-2. ユーザーの指示からステップと期待結果を構成
-3. scenarios/ にYAMLファイルを生成
+1. **`scenarios/GUIDE.md` を Read ツールで読む**（YAML 構造・アクション・アサーションのリファレンス）
+2. 対象アプリのUIを `list_controls` で調査
+3. ユーザーの指示からステップと期待結果を構成
+4. `scenarios/GUIDE.md` のパターン集を参考に YAML ファイルを生成
 
 ---
 
