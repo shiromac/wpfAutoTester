@@ -158,18 +158,19 @@ def list_controls(
 
 
 @mcp.tool()
-def click(window_query: str = "", target_id: str = "", selector: dict = {}, double: bool = False) -> str:
+def click(window_query: str = "", target_id: str = "", selector: dict = {}, double: bool = False, method: str = "mouse") -> str:
     """Click a UI element.
 
     target_id accepts registered IDs (e.g. "target-1") or shorthand formats
     that auto-resolve: "pid:12345", "process:MyApp.exe", "title_re:.*MyApp.*".
     Selector priority: automation_id > name+control_type > bounding_rect center.
     Set double=true for double-click.
+    method: "mouse" (default), "invoke" (UIA InvokePattern), "keys" (focus + SPACE).
     """
     try:
         t = _resolve_target(window_query or None, target_id or None)
         s = _to_selector(selector)
-        data = UIAEngine.click(t, s, double=double)
+        data = UIAEngine.click(t, s, double=double, method=method)
         return _ok(data)
     except MultipleElementsFoundError as exc:
         return _err_ambiguous(exc)

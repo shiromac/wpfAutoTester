@@ -560,15 +560,16 @@ def ui_focus(ctx, pid, title_re):
 @click.option("--name", default=None, help="Element name")
 @click.option("--control-type", default=None, help="Control type")
 @click.option("--double", is_flag=True, default=False, help="Double-click instead of single click")
+@click.option("--method", type=click.Choice(["mouse", "invoke", "keys"]), default="mouse", help="Click method: mouse (default), invoke (UIA InvokePattern), keys (focus + SPACE)")
 @click.pass_context
-def ui_click(ctx, pid, title_re, aid, name, control_type, double):
+def ui_click(ctx, pid, title_re, aid, name, control_type, double, method):
     """Click a UI element."""
     _run_guard(ctx, "click")
     from wpf_agent.uia.engine import UIAEngine
 
     target = _resolve_ui_target(pid, title_re)
     selector = _build_selector(aid, name, control_type)
-    result = UIAEngine.click(target, selector, double=double)
+    result = UIAEngine.click(target, selector, double=double, method=method)
     click.echo(json.dumps(result, ensure_ascii=False))
 
 
@@ -851,7 +852,18 @@ def _do_close(pid: int, force: bool = False) -> None:
     if closed_hwnds:
         if is_launched_pid(pid):
             remove_launched_pid(pid)
-        click.echo(json.dumps({"closed": True, "pid": pid, "windows": len(closed_hwnds)}, ensure_ascii=False))
+        # Poll for process exit (up to 3s)
+        import psutil as _ps
+        exited = False
+        for _ in range(30):
+            if not _ps.pid_exists(pid):
+                exited = True
+                break
+            time.sleep(0.1)
+        result = {"closed": True, "pid": pid, "windows": len(closed_hwnds), "exited": exited}
+        if not exited:
+            result["warning"] = "Process still running after 3s"
+        click.echo(json.dumps(result, ensure_ascii=False))
     else:
         click.echo(json.dumps({"closed": False, "pid": pid, "error": "No visible window found"}, ensure_ascii=False))
         sys.exit(1)

@@ -94,10 +94,23 @@ class UIAEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def click(target: ResolvedTarget, selector: Selector, *, double: bool = False) -> dict[str, Any]:
+    def click(
+        target: ResolvedTarget,
+        selector: Selector,
+        *,
+        double: bool = False,
+        method: str = "mouse",
+    ) -> dict[str, Any]:
         elem = _find_element(target, selector)
-        elem.click_input(double=double)
-        return {"clicked": True, "double": double, "selector": selector.describe()}
+        if method == "invoke":
+            elem.invoke()
+        elif method == "keys":
+            elem.click_input()
+            from pywinauto.keyboard import send_keys as _send_keys
+            _send_keys("{SPACE}")
+        else:
+            elem.click_input(double=double)
+        return {"clicked": True, "double": double, "method": method, "selector": selector.describe()}
 
     @staticmethod
     def drag(
@@ -182,8 +195,9 @@ class UIAEngine:
         else:
             win = _top_window(target)
             win.set_focus()
-        _send_keys(keys)
-        return {"sent": True, "keys": keys}
+        normalized = _normalize_keys(keys)
+        _send_keys(normalized)
+        return {"sent": True, "keys": normalized}
 
     @staticmethod
     def select_combo(
@@ -409,6 +423,22 @@ def _walk(
         except Exception:
             pass
         _walk(child, out, depth, current + 1, filter_type)
+
+
+_KEY_ALIASES: dict[str, str] = {
+    "ESCAPE": "ESC",
+    "RETURN": "ENTER",
+    "DEL": "DELETE",
+    "BS": "BACKSPACE",
+}
+
+
+def _normalize_keys(keys: str) -> str:
+    """Normalize key aliases inside braces to pywinauto-recognized names."""
+    def _replace(m: re.Match) -> str:
+        name = m.group(1)
+        return "{" + _KEY_ALIASES.get(name.upper(), name) + "}"
+    return re.sub(r"\{([^}]+)\}", _replace, keys)
 
 
 def _rect_dict(r) -> dict[str, int]:
