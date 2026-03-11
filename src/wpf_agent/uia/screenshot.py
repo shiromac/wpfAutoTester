@@ -17,6 +17,7 @@ from wpf_agent.core.target import ResolvedTarget
 
 # Win32 constants
 PW_RENDERFULLCONTENT = 0x00000002
+SW_RESTORE = 9
 # DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 (Windows 10 1703+)
 _DPI_CONTEXT_PMV2 = ctypes.c_void_p(-4)
 
@@ -44,6 +45,73 @@ class _dpi_aware_context:
                 ctypes.windll.user32.SetThreadDpiAwarenessContext(self._prev)
             except (AttributeError, OSError):
                 pass
+
+
+def _ensure_visible(hwnd: int) -> None:
+    """Restore minimized windows and move clipped windows into the visible area.
+
+    PrintWindow captures correctly even for background windows, but fails
+    when the window is minimized (zero rect).  When a window is partially
+    off-screen (clipped), the captured image is cropped at the screen edge,
+    producing an incomplete screenshot.  This helper:
+      1. Restores minimized windows.
+      2. Detects windows that extend beyond the virtual screen boundary
+         and repositions them so the entire window is visible.
+    """
+    import time
+
+    user32 = ctypes.windll.user32
+
+    # Restore if minimized (IsIconic)
+    if user32.IsIconic(hwnd):
+        user32.ShowWindow(hwnd, SW_RESTORE)
+        time.sleep(0.3)
+
+    class RECT(ctypes.Structure):
+        _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                     ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+    rect = RECT()
+    user32.GetWindowRect(hwnd, ctypes.byref(rect))
+    w = rect.right - rect.left
+    h = rect.bottom - rect.top
+
+    if w <= 0 or h <= 0:
+        return
+
+    # Virtual screen bounds (union of all monitors)
+    SM_XVIRTUALSCREEN = 76
+    SM_YVIRTUALSCREEN = 77
+    SM_CXVIRTUALSCREEN = 78
+    SM_CYVIRTUALSCREEN = 79
+    vx = user32.GetSystemMetrics(SM_XVIRTUALSCREEN)
+    vy = user32.GetSystemMetrics(SM_YVIRTUALSCREEN)
+    vw = user32.GetSystemMetrics(SM_CXVIRTUALSCREEN)
+    vh = user32.GetSystemMetrics(SM_CYVIRTUALSCREEN)
+
+    # Check if window is clipped by virtual screen edges
+    new_left = rect.left
+    new_top = rect.top
+
+    if rect.left < vx:
+        new_left = vx
+    elif rect.right > vx + vw:
+        new_left = max(vx, vx + vw - w)
+
+    if rect.top < vy:
+        new_top = vy
+    elif rect.bottom > vy + vh:
+        new_top = max(vy, vy + vh - h)
+
+    if new_left != rect.left or new_top != rect.top:
+        SWP_NOSIZE = 0x0001
+        SWP_NOZORDER = 0x0004
+        SWP_NOACTIVATE = 0x0010
+        user32.SetWindowPos(
+            hwnd, 0, new_left, new_top, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+        )
+        time.sleep(0.2)
 
 
 def _capture_with_print_window(hwnd: int) -> Image.Image | None:
@@ -235,6 +303,9 @@ def capture_screenshot(
 
                 win = _top_window(target)
                 main_hwnd = win.handle
+
+                # Ensure window is visible (restore if minimized / off-screen)
+                _ensure_visible(main_hwnd)
 
                 # Find all visible windows for this PID via Win32 EnumWindows
                 # (pywinauto Desktop.windows() misses WPF popup HWNDs)

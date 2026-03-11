@@ -104,12 +104,19 @@ class UIAEngine:
         elem = _find_element(target, selector)
         if method == "invoke":
             elem.invoke()
+        elif method == "select":
+            elem.select()
         elif method == "keys":
             elem.click_input()
             from pywinauto.keyboard import send_keys as _send_keys
             _send_keys("{SPACE}")
         else:
-            elem.click_input(double=double)
+            # Auto-select for TabItem (SelectionItemPattern) to avoid SetCursorPos issues
+            ctrl_type = getattr(elem.element_info, "control_type", None)
+            if ctrl_type == "TabItem":
+                elem.select()
+            else:
+                elem.click_input(double=double)
         return {"clicked": True, "double": double, "method": method, "selector": selector.describe()}
 
     @staticmethod
@@ -164,7 +171,10 @@ class UIAEngine:
                 elem.type_keys(text, with_spaces=True)
         else:
             # keyboard method — fires WPF TextChanged / bindings
-            elem.click_input()
+            try:
+                elem.click_input()
+            except Exception:
+                elem.set_focus()
             if clear:
                 elem.type_keys("^a", with_spaces=False)
             elem.type_keys(text, with_spaces=True)
@@ -191,7 +201,7 @@ class UIAEngine:
 
         if selector and selector.to_find_kwargs():
             elem = _find_element(target, selector)
-            elem.click_input()
+            elem.set_focus()
         else:
             win = _top_window(target)
             win.set_focus()

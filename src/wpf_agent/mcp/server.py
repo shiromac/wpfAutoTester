@@ -48,6 +48,19 @@ def _resolve_target(
             return t
         return registry.get(target_id)
     if window_query:
+        # Support same shorthand prefixes as target_id
+        if window_query.startswith("pid:"):
+            pid = int(window_query.split(":", 1)[1])
+            _, t = registry.resolve({"pid": pid})
+            return t
+        if window_query.startswith("process:"):
+            name = window_query.split(":", 1)[1]
+            _, t = registry.resolve({"process": name})
+            return t
+        if window_query.startswith("title_re:"):
+            pattern = window_query.split(":", 1)[1]
+            _, t = registry.resolve({"title_re": pattern})
+            return t
         _, t = registry.resolve({"title_re": window_query})
         return t
     raise WpfAgentError("Provide window_query or target_id")
