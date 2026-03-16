@@ -11,7 +11,7 @@ def _find_project_root() -> pathlib.Path:
       2. Walk up from the package source directory (editable install)
     Fallback: cwd
     """
-    markers = (".wpf-agent", "profiles.json", ".git")
+    markers = (".wpf-agent", "profiles.json", ".git")  # profiles.json: legacy compat
 
     def _search(start: pathlib.Path) -> pathlib.Path | None:
         for d in [start, *start.parents]:

@@ -355,7 +355,7 @@ def personas_edit(name, description):
 # ── run / attach / launch ────────────────────────────────────────
 
 @main.command()
-@click.option("--profile", required=True, help="Profile name from profiles.json")
+@click.option("--profile", required=True, help="Profile name from .wpf-agent/profiles.json")
 def run(profile):
     """Run the agent loop with a profile (interactive mode)."""
     from wpf_agent.config import ProfileStore
