@@ -23,7 +23,7 @@ def main():
 
 @main.command()
 def init():
-    """Initialize project: create profiles.json template and directories."""
+    """Initialize project: create .wpf-agent/ config and artifact directories."""
     from wpf_agent.config import PersonaStore, ProfileStore
     from wpf_agent.constants import SESSION_DIR, TICKET_DIR
 
@@ -39,7 +39,7 @@ def init():
         pathlib.Path(d).mkdir(parents=True, exist_ok=True)
         click.echo(f"Created {d}/")
 
-    click.echo("\nInitialization complete. Edit profiles.json to add your target apps.")
+    click.echo("\nInitialization complete. Edit .wpf-agent/profiles.json to add your target apps.")
     click.echo("Then register the MCP server and install skills:")
     click.echo('  claude mcp add wpf-agent -- python -m wpf_agent mcp-serve')
     click.echo('  wpf-agent install-skills')

@@ -103,7 +103,7 @@ wpf-agent close --pid <pid>
 ## random モード（ランダム探索テスト）
 
 ### 手順
-1. profiles.json からプロファイルを確認
+1. .wpf-agent/profiles.json からプロファイルを確認
 2. 実行:
 ```bash
 wpf-agent random run --profile <profile> --max-steps <steps> --seed <seed>

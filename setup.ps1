@@ -71,7 +71,7 @@ try {
 
 Write-Host "`n=== Setup Complete ===" -ForegroundColor Cyan
 Write-Host "Next steps:"
-Write-Host "  1. Edit profiles.json to add your target WPF apps"
+Write-Host "  1. Edit .wpf-agent/profiles.json to add your target WPF apps"
 Write-Host "  2. Register MCP server with Claude Code (see above)"
 Write-Host "  3. Run: wpf-agent scenario run --file scenarios/demo_a_settings.yaml --profile <name>"
 Write-Host ""

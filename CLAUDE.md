@@ -217,8 +217,9 @@ testApp/                       # WPF テスト用サンプルアプリ (.NET 9)
 artifacts/sessions/            # セッションログ (実行時生成)
 artifacts/tickets/             # チケット (実行時生成)
 tests/                         # ユニットテスト
-profiles.json                  # 対象アプリ定義
-personas.json                  # ペルソナプリセット定義
+.wpf-agent/                    # 設定ファイル
+├── profiles.json              # 対象アプリ定義
+└── personas.json              # ペルソナプリセット定義
 ```
 
 ## 開発
@@ -372,7 +373,7 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 
 #### 判断のフロー
 1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
-2. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
+2. 対象アプリの指定があるか？ → なければプロファイル (`.wpf-agent/profiles.json`) や直近の会話から推定、それでも不明なら聞く
 3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
 4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
 5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う
@@ -414,7 +415,7 @@ UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionC
 
 ### 判断のフロー
 1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
-2. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
+2. 対象アプリの指定があるか？ → なければプロファイル (`.wpf-agent/profiles.json`) や直近の会話から推定、それでも不明なら聞く
 3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
 4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
 5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う
@@ -552,7 +553,7 @@ wpf-agent ui click --pid 12345 --aid BtnOK
 
 #### 判断のフロー
 1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
-2. 対象アプリの指定があるか？ → なければプロファイル (`profiles.json`) や直近の会話から推定、それでも不明なら聞く
+2. 対象アプリの指定があるか？ → なければプロファイル (`.wpf-agent/profiles.json`) や直近の会話から推定、それでも不明なら聞く
 3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
 4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
 5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う

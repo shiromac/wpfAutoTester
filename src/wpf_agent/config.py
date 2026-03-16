@@ -8,7 +8,12 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from wpf_agent.constants import DEFAULT_TIMEOUT_MS, PERSONAS_FILE, PROFILES_FILE
+from wpf_agent.constants import (
+    DEFAULT_TIMEOUT_MS,
+    PERSONAS_FILE,
+    PROFILES_FILE,
+    PROJECT_ROOT,
+)
 
 
 class SafetyConfig(BaseModel):
@@ -51,6 +56,11 @@ class ProfileStore:
 
     def __init__(self, path: str | pathlib.Path | None = None):
         self.path = pathlib.Path(path or PROFILES_FILE)
+        # Backward compat: fall back to legacy root-level file
+        if not self.path.exists() and path is None:
+            legacy = PROJECT_ROOT / "profiles.json"
+            if legacy.exists():
+                self.path = legacy
 
     def _load_raw(self) -> list[dict[str, Any]]:
         if not self.path.exists():
@@ -117,6 +127,11 @@ class PersonaStore:
 
     def __init__(self, path: str | pathlib.Path | None = None):
         self.path = pathlib.Path(path or PERSONAS_FILE)
+        # Backward compat: fall back to legacy root-level file
+        if not self.path.exists() and path is None:
+            legacy = PROJECT_ROOT / "personas.json"
+            if legacy.exists():
+                self.path = legacy
 
     def _load_raw(self) -> list[dict[str, Any]]:
         if not self.path.exists():

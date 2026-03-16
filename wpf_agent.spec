@@ -11,7 +11,7 @@ a = Analysis(
     pathex=['src'],
     binaries=[],
     datas=[
-        ('profiles.json', '.'),
+        ('.wpf-agent/profiles.json', '.wpf-agent'),
         ('scenarios', 'scenarios'),
     ],
     hiddenimports=[
