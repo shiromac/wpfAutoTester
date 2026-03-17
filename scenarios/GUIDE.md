@@ -11,7 +11,7 @@ id: my-scenario               # シナリオID（ユニーク）
 title: "シナリオの説明"         # タイトル
 tags: [smoke, login]           # タグ（任意）
 owner: tester                  # 作成者（任意）
-profile: myapp                 # profiles.json のプロファイル名
+profile: myapp                 # .wpf-agent/profiles.json のプロファイル名
 
 steps:
   - action: アクション名
@@ -28,7 +28,7 @@ steps:
 
 | 方法 | 説明 |
 |------|------|
-| `profile: myapp` | profiles.json に登録済みのプロファイル名 |
+| `profile: myapp` | .wpf-agent/profiles.json に登録済みのプロファイル名 |
 | `target_spec:` | 直接指定（下記参照） |
 
 ```yaml

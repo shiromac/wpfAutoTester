@@ -4,7 +4,7 @@
 #   wpf-agent random run --config scenarios/random_example.yaml --profile MyApp
 #   wpf-agent random run --profile MyApp --max-steps 100 --seed 42  # CLI直接指定も可
 
-# 対象プロファイル（profiles.json から）
+# 対象プロファイル（.wpf-agent/profiles.json から）
 profile: MyApp-Dev
 
 # 乱数シード（省略時は自動生成・記録される）
@@ -52,7 +52,7 @@ invariants:
       automation_id: StatusBar
     description: "ステータスバーは常に表示されているべき"
 
-# 安全設定（profiles.json の safety を上書き可能）
+# 安全設定（.wpf-agent/profiles.json の safety を上書き可能）
 safety:
   allow_destructive: false
   destructive_patterns:

@@ -374,7 +374,7 @@ Use one session directory per run (`1 run = 1 session ID`).
 - ZIP distribution (recommended): `wpf-ui-agent/`
   - `wpf-agent.exe` (single executable bundling runner + MCP server)
   - `setup.ps1` (initialization + Claude Code registration helper)
-  - `profiles.json` (target app definitions)
+  - `.wpf-agent/profiles.json` (target app definitions)
   - `README.md`
 
 If implemented in Python, single-exe packaging via PyInstaller (or equivalent) is strongly preferred.
@@ -384,7 +384,7 @@ If implemented in Python, single-exe packaging via PyInstaller (or equivalent) i
 Running `setup.ps1` must perform:
 
 1. Prerequisite checks (Windows/permissions/required components)
-2. `profiles.json` template generation
+2. `.wpf-agent/profiles.json` template generation
 3. MCP registration guidance for Claude Code (including command examples)
 4. Smoke test (run demo scenario A in dry-run)
 
@@ -402,7 +402,7 @@ Running `setup.ps1` must perform:
 
 #### 10.3.4 Profile Format (Arbitrary App Targeting)
 
-`profiles.json` must support multiple app profiles:
+`.wpf-agent/profiles.json` must support multiple app profiles:
 
 - `name`: e.g., `MyApp-Dev`
 - `match`: `pid` / `process` / `title_re` / `exe`
@@ -431,7 +431,7 @@ Running `setup.ps1` must perform:
 6. Distribution artifacts (required)
    - `wpf-agent.exe` (single executable) or equivalent easy distribution artifact
    - `setup.ps1`
-   - `profiles.json` template
+   - `.wpf-agent/profiles.json` template
    - `README.md` (one-page quick-start)
 
 ---
@@ -440,7 +440,7 @@ Running `setup.ps1` must perform:
 
 - Tools are callable from Claude Code (via MCP)
 - Target app can be specified arbitrarily using **all 4 methods** (PID/process/EXE/title regex)
-- Multiple apps can be registered in `profiles.json` and switched via `--profile`
+- Multiple apps can be registered in `.wpf-agent/profiles.json` and switched via `--profile`
 - Target app window can be identified and focused
 - UIA control list can be retrieved
 - Click/input by AutomationId succeeds
@@ -473,7 +473,7 @@ Running `setup.ps1` must perform:
    - `list_windows` / `resolve_target` / `focus_window` / `list_controls` / `click` / `type_text` / `screenshot`
    - Achieve demo (A) using arbitrary app targeting (PID/title)
 2. Distribution and setup hardening
-   - `wpf-agent init` / `profiles.json` / `setup.ps1`
+   - `wpf-agent init` / `.wpf-agent/profiles.json` / `setup.ps1`
    - MCP registration path for Claude Code
    - Smoke test
 3. Stabilization

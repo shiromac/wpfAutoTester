@@ -22,11 +22,11 @@ wpf-agent init
 claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
 ```
 
-4. profiles.json にユーザーの対象アプリを設定
+4. .wpf-agent/profiles.json にユーザーの対象アプリを設定
 
 5. 動作確認: `list_windows` ツールを呼んでウィンドウ一覧を取得
 
 指示: $ARGUMENTS
 
 ユーザーが対象アプリの情報（プロセス名、ウィンドウタイトル、EXEパス等）を提供した場合は、
-profiles.json に適切なプロファイルを追加してください。
+.wpf-agent/profiles.json に適切なプロファイルを追加してください。

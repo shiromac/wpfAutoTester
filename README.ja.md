@@ -47,7 +47,7 @@ claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
 wpf-agent install-skills
 ```
 
-> **Note:** `profiles.json` と `personas.json` は保持されます。`wpf-agent init` はファイルが存在しない場合のみ作成するため、再実行しても安全です。
+> **Note:** `.wpf-agent/profiles.json` と `.wpf-agent/personas.json` は保持されます。`wpf-agent init` はファイルが存在しない場合のみ作成するため、再実行しても安全です。
 
 pip 経由でインストールした場合:
 
@@ -108,7 +108,7 @@ wpf-agent verify --exe bin/Debug/net9.0-windows/MyApp.exe --spec verify-spec.yam
 ### プロファイルでアプリを指定
 
 ```bash
-# profiles.json に対象アプリの情報を設定してから実行:
+# .wpf-agent/profiles.json に対象アプリの情報を設定してから実行:
 wpf-agent run --profile MyApp-Dev
 ```
 
@@ -282,7 +282,7 @@ cd wpfAutoTester
 # 2. パッケージをインストール
 pip install -e .[dev]
 
-# 3. 初期化（profiles.json 等を生成）
+# 3. 初期化（.wpf-agent/profiles.json 等を生成）
 wpf-agent init
 
 # 4. スキルをインストール（.claude/skills/ に配置）
@@ -324,7 +324,7 @@ wpf-agent install-skills --github
 
 ## プロファイル設定
 
-`profiles.json` を編集して対象アプリを登録:
+`.wpf-agent/profiles.json` を編集して対象アプリを登録:
 
 ```json
 [
@@ -353,7 +353,7 @@ wpf-agent install-skills --github
 
 ## ペルソナプリセット
 
-`personas.json` にユーザビリティテスト用のペルソナプリセットを定義:
+`.wpf-agent/personas.json` にユーザビリティテスト用のペルソナプリセットを定義:
 
 ```json
 [
@@ -428,8 +428,9 @@ scenarios/    # YAML シナリオ定義
 artifacts/    # セッションとチケット (実行時生成)
 tests/        # ユニットテスト
 testApp/      # WPF テスト用サンプルアプリ (.NET 9)
-profiles.json # 対象アプリ定義
-personas.json # ペルソナプリセット定義
+.wpf-agent/   # 設定ファイル
+  profiles.json # 対象アプリ定義
+  personas.json # ペルソナプリセット定義
 ```
 
 ## 実行ファイルのビルド

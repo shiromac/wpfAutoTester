@@ -55,7 +55,7 @@ wpf-agent init
 ```
 
 以下が作成されます:
-- `profiles.json` — 対象アプリの定義ファイル
+- `.wpf-agent/profiles.json` — 対象アプリの定義ファイル
 - `artifacts/sessions/` — テスト結果の保存先
 - `artifacts/tickets/` — 障害チケットの保存先
 
@@ -115,7 +115,7 @@ wpf-agent profiles add --name myapp --title-re "My Application.*"
 wpf-agent profiles add --name myapp --exe "C:/path/to/MyApp.exe"
 ```
 
-### 方法 B: profiles.json を直接編集
+### 方法 B: .wpf-agent/profiles.json を直接編集
 
 ```json
 [

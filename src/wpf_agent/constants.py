@@ -4,14 +4,14 @@ import pathlib
 
 
 def _find_project_root() -> pathlib.Path:
-    """Find the project root (directory containing profiles.json or .git).
+    """Find the project root (directory containing .wpf-agent/ or .git).
 
     Search order:
       1. Walk up from cwd
       2. Walk up from the package source directory (editable install)
     Fallback: cwd
     """
-    markers = ("profiles.json", ".git")
+    markers = (".wpf-agent", "profiles.json", ".git")  # profiles.json: legacy compat
 
     def _search(start: pathlib.Path) -> pathlib.Path | None:
         for d in [start, *start.parents]:
@@ -40,8 +40,9 @@ DEFAULT_DEPTH = 4
 DEFAULT_LOG_TAIL = 20
 SESSION_DIR = str(PROJECT_ROOT / "artifacts" / "sessions")
 TICKET_DIR = str(PROJECT_ROOT / "artifacts" / "tickets")
-PROFILES_FILE = str(PROJECT_ROOT / "profiles.json")
-PERSONAS_FILE = str(PROJECT_ROOT / "personas.json")
+CONFIG_DIR = PROJECT_ROOT / ".wpf-agent"
+PROFILES_FILE = str(CONFIG_DIR / "profiles.json")
+PERSONAS_FILE = str(CONFIG_DIR / "personas.json")
 MAX_CONTROLS = 500
 SCREENSHOT_FORMAT = "png"
 

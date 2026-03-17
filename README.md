@@ -47,7 +47,7 @@ claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
 wpf-agent install-skills
 ```
 
-> **Note:** Your `profiles.json` and `personas.json` are preserved — `wpf-agent init` only creates them if they don't exist, so it's safe to re-run if needed.
+> **Note:** Your `.wpf-agent/profiles.json` and `.wpf-agent/personas.json` are preserved — `wpf-agent init` only creates them if they don't exist, so it's safe to re-run if needed.
 
 For pip-only installs (non-development):
 
@@ -108,7 +108,7 @@ When verification fails, Claude Code can read the report, fix the code, rebuild,
 ### Target an App by Profile
 
 ```bash
-# Edit profiles.json with your app details, then:
+# Edit .wpf-agent/profiles.json with your app details, then:
 wpf-agent run --profile MyApp-Dev
 ```
 
@@ -273,7 +273,7 @@ cd wpfAutoTester
 # 2. Install the package
 pip install -e .[dev]
 
-# 3. Initialize (generates profiles.json, etc.)
+# 3. Initialize (generates .wpf-agent/profiles.json, etc.)
 wpf-agent init
 
 # 4. Install skills (places them in .claude/skills/)
@@ -315,7 +315,7 @@ wpf-agent install-skills --github
 
 ## Profile Configuration
 
-Edit `profiles.json`:
+Edit `.wpf-agent/profiles.json`:
 
 ```json
 [
@@ -331,7 +331,7 @@ Edit `profiles.json`:
 
 ## Persona Presets
 
-`personas.json` defines reusable persona presets for usability testing:
+`.wpf-agent/personas.json` defines reusable persona presets for usability testing:
 
 ```json
 [
@@ -373,8 +373,9 @@ scenarios/    # YAML scenario definitions
 artifacts/    # sessions and tickets (generated)
 tests/        # unit tests
 testApp/      # Sample WPF app (.NET 9) for testing
-profiles.json # target app definitions
-personas.json # persona presets for usability testing
+.wpf-agent/   # configuration files
+  profiles.json   # target app definitions
+  personas.json   # persona presets for usability testing
 ```
 
 ## Building Executable
