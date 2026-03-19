@@ -1,7 +1,52 @@
 # WPF UI Debug Automation Agent
 
 ## プロジェクト概要
-Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作する。
+Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作し、以下の機能を提供する:
+
+- **UI 自動操作** — クリック・テキスト入力・スクリーンショット等を Claude Code から直接実行
+- **探索テスト** — AI が自律的にアプリの全画面を探索し、異常を検出
+- **ランダムテスト** — ランダム操作でクラッシュや未処理例外を発見
+- **シナリオテスト** — YAML 定義のテストシナリオを自動実行
+- **ユーザビリティテスト** — ペルソナベースの操作性評価
+- **ビルド後検証** — exe を起動して基本動作を自動チェック
+- **バグチケット管理** — 発見した問題のチケット作成・トリアージ
+
+詳しい使い方（CLI コマンド一覧・MCP ツール・UI 操作コマンド詳細）は **[docs/wpf-agent-usage.md](docs/wpf-agent-usage.md)** を参照。
+
+## カスタムスキル (スラッシュコマンド)
+- `/wpf-setup` — セットアップとMCPサーバー登録
+- `/wpf-ui` — UI操作（調査・クリック・入力・スクリーンショット）
+- `/wpf-test` — テスト実行（探索・ランダム・シナリオ・ユーザビリティ・検証・リプレイ）
+- `/wpf-ticket` — チケット管理（確認・作成・整理）
+
+## 自然言語リクエストへの対応
+
+ユーザーが以下のような自然言語で依頼した場合、**対応するスキルまたは `wpf-agent ui` コマンドを使って実行すること**。スラッシュコマンドを知らないユーザーでも自然に使えるようにする。
+
+**重要**: 「wpf-agent で〇〇して」「wpf-agent を使って〇〇」のように **`wpf-agent` が明示されている場合は、必ず `wpf-agent` のコマンドやスキルを使って実行すること**。他のツールや手段で代替しない。
+
+| ユーザーの発言（例） | 実行すべきアクション |
+|---------------------|---------------------|
+| 「デバッグして」「動かして確認」 | `wpf-agent launch` で起動 → `/wpf-test explore` で探索 |
+| 「動作確認して」「テストして」 | `/wpf-test verify` を実行。起動済みなら `/wpf-test explore` |
+| 「画面を見て」「スクショ撮って」 | `/wpf-ui inspect` を実行 |
+| 「探索テストして」 | `/wpf-test explore` を実行 |
+| 「ランダムテストして」 | `/wpf-test random` を実行 |
+| 「シナリオテストして」 | `/wpf-test scenario` を実行 |
+| 「ユーザビリティテストして」 | `/wpf-test usability` を実行 |
+| 「チケット見せて」「バグ一覧」 | `/wpf-ticket` を実行 |
+| 「〇〇に入力して」 | `/wpf-ui type` を実行。**python/xdotool で直接入力しない** |
+| 「〇〇の値を読んで」 | `wpf-agent ui read` を実行。**python で直接読み取らない** |
+| 「〇〇をクリックして」 | `/wpf-ui click` を実行 |
+| 「起動して」 | `wpf-agent launch --exe <path>` で起動 |
+| 「閉じて」 | `wpf-agent ui close --pid <pid>` で終了 |
+
+### 判断のフロー
+1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う
+2. 対象アプリの指定があるか？ → なければプロファイルや会話から推定、不明なら聞く
+3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
+4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
+5. 未起動なら `wpf-agent launch` で起動してから操作
 
 ## テキスト入力・読み取りの禁止事項（重要）
 UI 要素へのテキスト入力とテキスト読み取りは、**必ず `wpf-agent ui type` / `wpf-agent ui read` コマンド、または MCP ツール `type_text` / `read_text` を使うこと**。以下の手段で直接操作してはならない:
@@ -12,21 +57,6 @@ UI 要素へのテキスト入力とテキスト読み取りは、**必ず `wpf-
 - **禁止**: クリップボード経由 (`pyperclip`, `xclip`, `xsel`, Ctrl+V) でテキストを貼り付ける
 - **禁止**: `SendKeys`, `xte`, `ydotool` 等の外部ツールでキー入力をシミュレートする
 
-正しい方法:
-```bash
-# テキスト入力 (正しい — keyboard がデフォルト。WPF バインディングが発火する)
-wpf-agent ui type --pid <pid> --aid <id> --text "入力値"
-
-# value_pattern は高速だが WPF TextChanged が発火しない場合がある
-wpf-agent ui type --pid <pid> --aid <id> --text "入力値" --method value_pattern
-
-# キーボードショートカット送信 (正しい)
-wpf-agent ui send-keys --pid <pid> --keys "{ENTER}"
-
-# テキスト読み取り (正しい)
-wpf-agent ui read --pid <pid> --aid <id>
-```
-
 理由: `wpf-agent ui type` / `wpf-agent ui send-keys` はマウス移動ガード (UI ガード) を通るため安全。直接操作はガードを回避してしまい、ユーザーの操作と競合する危険がある。
 
 ## Bash コマンド生成ルール
@@ -34,144 +64,11 @@ wpf-agent ui read --pid <pid> --aid <id>
   - パイプ付きコマンドは glob パーミッション `Bash(wpf-agent *)` にマッチしないため、**毎回ユーザーに権限確認ダイアログが表示されてしまう**
   - UI 要素の検索には `--search`, `--name-filter`, `--aid-filter`, `--type-filter`, `--has-aid`, `--has-name` オプションを使う
   - `--search`, `--name-filter`, `--aid-filter` はカンマ区切りで OR 検索できる（例: `--name-filter "OK,FAIL,SKIP"`）
-  - OK: `wpf-agent ui controls --pid 1234 --search "Add" --type-filter Button --brief`
-  - OK: `wpf-agent ui controls --pid 1234 --aid-filter "Btn" --brief`
-  - OK: `wpf-agent ui controls --pid 1234 --name-filter "OK,FAIL,SKIP,終端" --brief`  ← カンマ区切り OR
   - NG: `wpf-agent ui controls --pid 1234 | python -c "import json,sys; ..."` ← 権限確認が毎回発生
   - NG: `for ... do wpf-agent ...; done` ← シェルループも glob にマッチしない。各コマンドを個別に実行すること
 - `wpf-agent` コマンドは**必ず1行で記述**すること（改行禁止）
   - glob パーミッション `Bash(wpf-agent *)` の `*` は改行にマッチしない
   - やむを得ずパイプが必要な場合のみ `;` で1行にまとめる
-
-## MCP サーバー
-このプロジェクトは MCP サーバーを提供する。登録コマンド:
-```
-claude mcp add wpf-agent -- python -m wpf_agent mcp-serve
-```
-
-### 利用可能な MCP ツール (15個)
-- `list_windows` — トップレベルウィンドウ一覧
-- `resolve_target(target_spec)` — アプリ特定 (pid/process/exe/title_re)
-- `focus_window(window_query|target_id)` — ウィンドウを前面に
-- `wait_window(window_query|target_id, timeout_ms)` — ウィンドウ出現待機
-- `list_controls(window_query|target_id, depth, filter, search)` — UIA コントロール列挙 (`search`: name/aid/value 部分一致、カンマ区切りで OR)
-- `click(window_query|target_id, selector)` — クリック
-- `drag(window_query|target_id, src_selector, dst_selector)` — ドラッグ&ドロップ (要素間のマウスドラッグ)
-- `type_text(window_query|target_id, selector, text, method)` — テキスト入力 (`method`: `"keyboard"` (デフォルト) / `"value_pattern"`)
-- `send_keys(window_query|target_id, selector, keys)` — キーボードショートカット送信 (pywinauto 記法: `"{ENTER}"`, `"^a"`)
-- `select_combo(window_query|target_id, selector, item_text)` — コンボ選択
-- `toggle(window_query|target_id, selector, state)` — トグル
-- `read_text(window_query|target_id, selector)` — テキスト読取
-- `get_state(window_query|target_id, selector)` — 状態取得
-- `screenshot(window_query|target_id, region)` — スクリーンショット
-- `wait_for(window_query|target_id, selector, condition, value, timeout_ms)` — 条件待機 (条件: exists, enabled, visible, text_equals, text_contains, text_not_equals, text_changed)
-
-### ツール使用パターン
-1. まず `list_windows` でウィンドウを確認
-2. `resolve_target({"title_re": "..."})` で target_id を取得
-3. `focus_window(target_id=...)` でフォーカス
-4. `list_controls(target_id=..., depth=4)` でコントロール調査
-5. `click` / `type_text` 等で操作
-6. `screenshot` / `read_text` / `get_state` で検証
-
-### セレクタの優先順位
-1. `automation_id` (最も安定)
-2. `name` + `control_type`
-3. `bounding_rect` の中心クリック (最後の手段)
-
-## CLI コマンド
-```
-wpf-agent init                           # 初期化
-wpf-agent install-skills                 # Claude Code スキルインストール
-wpf-agent install-skills --github        # .github/skills/ にもコピー (Copilot Coding Agent用)
-wpf-agent profiles list/add/edit/remove  # プロファイル管理
-wpf-agent personas list/add/edit/remove  # ペルソナプリセット管理
-wpf-agent run --profile <name>           # エージェントループ
-wpf-agent attach --pid <pid>             # PID接続
-wpf-agent launch --exe <path>            # 起動接続
-wpf-agent close --pid <pid> [--force]   # プロセスを終了 (--force: 起動元チェックスキップ)
-wpf-agent scenario run --file <yaml>     # シナリオテスト
-wpf-agent random run --profile <name>    # ランダムテスト
-wpf-agent explore run --profile <name>   # AI誘導型探索テスト
-wpf-agent verify --exe <path>            # ビルド後自動検証
-wpf-agent verify --exe <path> --spec <yaml>  # spec付き検証
-wpf-agent replay --file <json>           # リプレイ
-wpf-agent tickets open --last            # チケット確認
-wpf-agent tickets create --title "..." --summary "..." --actual-result "..." --expected-result "..." [--repro-steps "..."] [--evidence <path>] [--root-cause "..."] [--pid N] [--process "..."] [--profile "..."]
-wpf-agent tickets list-pending           # 未分類チケット一覧
-wpf-agent tickets triage --ticket <path> --decision <fix|wontfix> [--reason "..."]
-```
-
-### `wpf-agent ui` — Claude Code 直接 UI 操作
-Claude Code が Bash 経由で直接 UI を操作するためのコマンド群。ANTHROPIC_API_KEY 不要。
-
-#### 操作系コマンド (ガード対象)
-```
-wpf-agent ui focus --pid <pid>                           # ウィンドウフォーカス
-wpf-agent ui click --pid <pid> --aid <id> [--double] [--method mouse|invoke|keys]  # クリック (method: mouse=マウス, invoke=UIA InvokePattern, keys=フォーカス+SPACE)
-wpf-agent ui drag --pid <pid> --aid <src_id> --dst-aid <dst_id>  # ドラッグ&ドロップ
-wpf-agent ui type --pid <pid> --aid <id> --text "..." [--method keyboard|value_pattern]  # テキスト入力
-wpf-agent ui send-keys --pid <pid> --keys "{ENTER}"      # キーボードショートカット送信
-wpf-agent ui send-keys --pid <pid> --aid <id> --keys "^a" # 要素フォーカス後にキー送信
-wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
-wpf-agent ui select-combo --pid <pid> --aid <id> --item "text"  # コンボボックス選択
-wpf-agent ui close --pid <pid> [--force]                 # WM_CLOSE で終了 (--force: 起動元チェックスキップ)
-```
-
-#### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
-```
-wpf-agent ui windows [--brief]                            # トップレベルウィンドウ一覧 (PID/タイトル)
-wpf-agent ui alive --process <name> [--brief]             # プロセス生存確認 + PID取得
-wpf-agent ui alive --pid <pid>                            # PID指定の生存確認
-wpf-agent ui screenshot --pid <pid> [--save <path>]       # スクショ撮影 (ポップアップ自動合成)
-wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--search "text"] [--aid-filter "id"] [--name-filter "name,name2"] [--has-aid] [--brief]  # コントロール一覧・検索 (フィルタはカンマ区切りでOR)
-wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
-wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
-wpf-agent ui init-session --prefix <name>                  # セッション用ワークスペース作成 (タイムスタンプ付き)
-```
-
-#### ガード管理コマンド
-```
-wpf-agent ui status                       # 現在の状態 (active/paused)
-wpf-agent ui resume                       # 一時停止を解除して再開
-wpf-agent ui --no-guard click --pid ...   # ガードをスキップして実行
-```
-
-全コマンド共通: `--pid <int>` または `--title-re <regex>` でターゲット指定。
-セレクタ: `--aid`, `--name`, `--control-type` で要素指定 (aid 推奨)。
-
-#### 典型的な作業フロー
-```bash
-# 1. ウィンドウ一覧から対象アプリを探す
-wpf-agent ui windows --brief
-
-# 2. プロセス名から PID を取得 (--brief で数値だけ出力)
-wpf-agent ui alive --process MyApp --brief
-#=> 12345
-
-# 3. セッションディレクトリを作成 (タイムスタンプは自動生成)
-wpf-agent ui init-session --prefix explore
-#=> {"path": "artifacts/sessions/explore_20260301_153045"}
-
-# 4. 以降は --pid で操作
-wpf-agent ui controls --pid 12345 --brief
-wpf-agent ui screenshot --pid 12345 --save artifacts/sessions/explore_20260301_153045/screen.png
-wpf-agent ui click --pid 12345 --aid BtnOK
-```
-**注意**: タイムスタンプの取得には `init-session` を使うこと。`pwsh` や `date` コマンドで時刻を取得する必要はない。
-
-### UI ガード (マウス移動検知)
-操作系コマンド (`focus`, `click`, `drag`, `type`, `send-keys`, `toggle`) は実行前にマウス位置を 50ms サンプリングし、ユーザーのマウス移動 (>2px) を検出すると操作を中断する。中断後は pause ファイル (`~/.wpf-agent/pause`) で持続的にブロックされる。`close` はガード対象外（wpf-agent 起動プロセス限定で安全なため）。
-
-- 中断時: exit code 2 + `{"interrupted": true, "reason": "...", ...}` を JSON 出力
-- 実装: `src/wpf_agent/ui_guard.py` (check_guard, is_paused, set_paused, clear_pause)
-- 定数: `src/wpf_agent/constants.py` (GUARD_CHECK_DELAY_MS, GUARD_MOVEMENT_THRESHOLD_PX, GUARD_PAUSE_DIR)
-
-## カスタムスキル (スラッシュコマンド)
-- `/wpf-setup` — セットアップとMCPサーバー登録
-- `/wpf-ui` — UI操作（調査・クリック・入力・スクリーンショット）
-- `/wpf-test` — テスト実行（探索・ランダム・シナリオ・ユーザビリティ・検証・リプレイ）
-- `/wpf-ticket` — チケット管理（確認・作成・整理）
 
 ## ディレクトリ構成
 ```
@@ -212,6 +109,7 @@ src/wpf_agent/
     ├── generator.py           # チケット生成
     └── templates.py           # チケットテンプレート
 
+docs/                          # ドキュメント
 scenarios/                     # YAML シナリオ定義
 testApp/                       # WPF テスト用サンプルアプリ (.NET 9)
 artifacts/sessions/            # セッションログ (実行時生成)
@@ -230,331 +128,6 @@ python -m pytest tests/ -v
 
 ### 変更時の同期チェックリスト
 CLI オプションや CLAUDE.md の内容を変更した場合、以下のファイルも同期すること:
-1. **`src/wpf_agent/_claude_md_snippet.md`** — `wpf-agent init` 実行時にユーザーの CLAUDE.md へ `<!-- wpf-agent:start -->
-## WPF UI Debug Automation Agent (wpf-agent)
-
-Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作する。
-
-### テキスト入力・読み取り・キー送信の禁止事項（重要）
-UI 要素へのテキスト入力・テキスト読み取り・キー送信は、**必ず `wpf-agent ui type` / `wpf-agent ui read` / `wpf-agent ui send-keys` コマンド、または MCP ツール `type_text` / `read_text` / `send_keys` を使うこと**。以下の手段で直接操作してはならない:
-
-- **禁止**: `python -c` で pywinauto の `set_edit_text()`, `type_keys()`, `window_text()`, `get_value()` を直接呼ぶ
-- **禁止**: `xdotool type`, `xdotool key` でキーボード入力をシミュレートする
-- **禁止**: `python -c` で `keyboard`, `pyautogui`, `pynput` モジュールを使ってキー入力する
-- **禁止**: クリップボード経由 (`pyperclip`, `xclip`, `xsel`, Ctrl+V) でテキストを貼り付ける
-- **禁止**: `SendKeys`, `xte`, `ydotool` 等の外部ツールでキー入力をシミュレートする
-
-理由: `wpf-agent ui type` / `wpf-agent ui send-keys` はマウス移動ガード (UI ガード) を通るため安全。直接操作はガードを回避してしまい、ユーザーの操作と競合する危険がある。
-
-### Bash コマンド生成ルール
-- `wpf-agent` コマンドは**パイプ (`|`) を使わず、組み込みオプションだけで完結させる**こと
-  - パイプ付きコマンドは glob パーミッション `Bash(wpf-agent *)` にマッチしないため、**毎回ユーザーに権限確認ダイアログが表示されてしまう**
-  - UI 要素の検索には `--search`, `--name-filter`, `--aid-filter`, `--type-filter`, `--has-aid`, `--has-name` オプションを使う
-  - `--search`, `--name-filter`, `--aid-filter` はカンマ区切りで OR 検索できる（例: `--name-filter "OK,FAIL,SKIP"`）
-  - OK: `wpf-agent ui controls --pid 1234 --search "Add" --type-filter Button --brief`
-  - OK: `wpf-agent ui controls --pid 1234 --aid-filter "Btn" --brief`
-  - OK: `wpf-agent ui controls --pid 1234 --name-filter "OK,FAIL,SKIP,終端" --brief`  ← カンマ区切り OR
-  - NG: `wpf-agent ui controls --pid 1234 | python -c "import json,sys; ..."` ← 権限確認が毎回発生
-  - NG: `for ... do wpf-agent ...; done` ← シェルループも glob にマッチしない。各コマンドを個別に実行すること
-- `wpf-agent` コマンドは**必ず1行で記述**すること（改行禁止）
-  - glob パーミッション `Bash(wpf-agent *)` の `*` は改行にマッチしない
-  - やむを得ずパイプが必要な場合のみ `;` で1行にまとめる
-
-### CLI コマンド
-```
-wpf-agent init                           # 初期化
-wpf-agent install-skills                 # Claude Code スキルインストール
-wpf-agent profiles list/add/edit/remove  # プロファイル管理
-wpf-agent personas list/add/edit/remove  # ペルソナプリセット管理
-wpf-agent run --profile <name>           # エージェントループ
-wpf-agent attach --pid <pid>             # PID接続
-wpf-agent launch --exe <path>            # 起動接続
-wpf-agent close --pid <pid> [--force]   # プロセスを終了 (--force: 起動元チェックスキップ)
-wpf-agent scenario run --file <yaml>     # シナリオテスト
-wpf-agent random run --profile <name>    # ランダムテスト
-wpf-agent explore run --profile <name>   # AI誘導型探索テスト
-wpf-agent verify --exe <path>            # ビルド後自動検証
-wpf-agent verify --exe <path> --spec <yaml>  # spec付き検証
-wpf-agent replay --file <json>           # リプレイ
-wpf-agent tickets open --last            # チケット確認
-wpf-agent tickets create --title "..." --summary "..." --actual-result "..." --expected-result "..." [--repro-steps "..."] [--evidence <path>] [--root-cause "..."] [--pid N] [--process "..."] [--profile "..."]
-wpf-agent tickets list-pending           # 未分類チケット一覧
-wpf-agent tickets triage --ticket <path> --decision <fix|wontfix> [--reason "..."]
-```
-
-### `wpf-agent ui` — Claude Code 直接 UI 操作
-Claude Code が Bash 経由で直接 UI を操作するためのコマンド群。ANTHROPIC_API_KEY 不要。
-
-#### 操作系コマンド (ガード対象)
-```
-wpf-agent ui focus --pid <pid>                           # ウィンドウフォーカス
-wpf-agent ui click --pid <pid> --aid <id> [--double] [--method mouse|invoke|keys]  # クリック (method: mouse=マウス, invoke=UIA InvokePattern, keys=フォーカス+SPACE)
-wpf-agent ui drag --pid <pid> --aid <src_id> --dst-aid <dst_id>  # ドラッグ&ドロップ
-wpf-agent ui type --pid <pid> --aid <id> --text "..." [--method keyboard|value_pattern]  # テキスト入力
-wpf-agent ui send-keys --pid <pid> --keys "{ENTER}"      # キーボードショートカット送信
-wpf-agent ui send-keys --pid <pid> --aid <id> --keys "^a" # 要素フォーカス後にキー送信
-wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
-wpf-agent ui select-combo --pid <pid> --aid <id> --item "text"  # コンボボックス選択
-wpf-agent ui close --pid <pid> [--force]                 # WM_CLOSE で終了 (--force: 起動元チェックスキップ)
-```
-
-#### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
-```
-wpf-agent ui windows [--brief]                            # トップレベルウィンドウ一覧 (PID/タイトル)
-wpf-agent ui alive --process <name> [--brief]             # プロセス生存確認 + PID取得
-wpf-agent ui alive --pid <pid>                            # PID指定の生存確認
-wpf-agent ui screenshot --pid <pid> [--save <path>]       # スクショ撮影 (ポップアップ自動合成)
-wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--search "text"] [--aid-filter "id"] [--name-filter "name,name2"] [--has-aid] [--brief]  # コントロール一覧・検索 (フィルタはカンマ区切りでOR)
-wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
-wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
-wpf-agent ui init-session --prefix <name>                  # セッション用ワークスペース作成 (タイムスタンプ付き)
-```
-
-#### ガード管理コマンド
-```
-wpf-agent ui status                       # 現在の状態 (active/paused)
-wpf-agent ui resume                       # 一時停止を解除して再開
-wpf-agent ui --no-guard click --pid ...   # ガードをスキップして実行
-```
-
-全コマンド共通: `--pid <int>` または `--title-re <regex>` でターゲット指定。
-セレクタ: `--aid`, `--name`, `--control-type` で要素指定 (aid 推奨)。
-
-#### 典型的な作業フロー
-```bash
-# 1. ウィンドウ一覧から対象アプリを探す
-wpf-agent ui windows --brief
-
-# 2. プロセス名から PID を取得 (--brief で数値だけ出力)
-wpf-agent ui alive --process MyApp --brief
-#=> 12345
-
-# 3. 以降は --pid で操作
-wpf-agent ui controls --pid 12345 --brief
-wpf-agent ui screenshot --pid 12345 --save /tmp/screen.png
-wpf-agent ui click --pid 12345 --aid BtnOK
-```
-
-### カスタムスキル (スラッシュコマンド)
-- `/wpf-setup` — セットアップとMCPサーバー登録
-- `/wpf-ui` — UI操作（調査・クリック・入力・スクリーンショット）
-- `/wpf-test` — テスト実行（探索・ランダム・シナリオ・ユーザビリティ・検証・リプレイ）
-- `/wpf-ticket` — チケット管理（確認・作成・整理）
-
-### セレクタの優先順位
-1. `automation_id` (最も安定)
-2. `name` + `control_type`
-3. `bounding_rect` の中心クリック (最後の手段)
-
-### 自然言語リクエストへの対応
-
-ユーザーが以下のような自然言語で依頼した場合、**対応するスキルまたは `wpf-agent ui` コマンドを使って実行すること**。スラッシュコマンドを知らないユーザーでも自然に使えるようにする。
-
-**重要**: 「wpf-agent で〇〇して」「wpf-agent を使って〇〇」のように **`wpf-agent` が明示されている場合は、必ず `wpf-agent` のコマンドやスキルを使って実行すること**。他のツールや手段で代替しない。
-
-| ユーザーの発言（例） | 実行すべきアクション |
-|---------------------|---------------------|
-| 「デバッグして」「wpf-agentでデバッグ」「動かして確認」 | 対象アプリを `wpf-agent launch` で起動し、`/wpf-test explore` で探索。exe パスが不明ならプロファイルか会話から推定、それでも不明なら聞く |
-| 「動作確認して」「テストして」「確認して」 | `/wpf-test verify` を実行（exe パスが不明なら聞く）。起動済みなら `/wpf-test explore` で探索 |
-| 「画面を見て」「UI を確認して」「スクショ撮って」 | `/wpf-ui inspect` を実行 |
-| 「探索テストして」「全部触って」 | `/wpf-test explore` を実行 |
-| 「ユーザビリティテストして」「ペルソナテストして」 | `/wpf-test usability` を実行 |
-| 「ランダムテストして」 | `/wpf-test random` を実行 |
-| 「シナリオテストして」 | `/wpf-test scenario` を実行 |
-| 「チケット見せて」「バグ一覧」 | `/wpf-ticket` を実行 |
-| 「チケット作成して」 | `/wpf-ticket create` を実行 |
-| 「チケット整理して」 | `/wpf-ticket triage` を実行 |
-| 「〇〇に入力して」「テキストを入れて」 | `/wpf-ui type` を実行。**python/xdotool で直接入力しない** |
-| 「〇〇の値を読んで」「テキストを取得して」 | `wpf-agent ui read --pid <pid> --aid <id>` を実行。**python で直接読み取らない** |
-| 「〇〇をクリックして」「ボタン押して」 | `/wpf-ui click` を実行 |
-| 「ドラッグして」「〇〇を〇〇に移動して」 | `wpf-agent ui drag --pid <pid> --aid <src> --dst-aid <dst>` を実行 |
-| 「起動して」「アプリを立ち上げて」 | `wpf-agent launch --exe <path>` で起動 |
-| 「閉じて」「終了して」 | `wpf-agent ui close --pid <pid>` で終了 |
-
-#### 判断のフロー
-1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
-2. 対象アプリの指定があるか？ → なければプロファイル (`.wpf-agent/profiles.json`) や直近の会話から推定、それでも不明なら聞く
-3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
-4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
-5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う
-<!-- wpf-agent:end -->
-` として埋め込まれるテンプレート。ここを更新しないと新規セットアップ時に古い情報が配布される
-2. **`.claude/skills/` 内の該当 SKILL.md** — 変更に関連するスキルのコード例・説明を更新
-
-## テストアプリ (testApp)
-WPF (.NET 9) のデバッグ用サンプルアプリ。ビルド済み exe:
-```
-testApp/bin/Debug/net9.0-windows/TestApp.exe
-```
-UI 要素: TitleLabel, StatusLabel, MainButton, ResetButton, InputField, OptionCheck, ColorCombo, CounterLabel
-
-## 自然言語リクエストへの対応
-
-ユーザーが以下のような自然言語で依頼した場合、**対応するスキルまたは `wpf-agent ui` コマンドを使って実行すること**。スラッシュコマンドを知らないユーザーでも自然に使えるようにする。
-
-**重要**: 「wpf-agent で〇〇して」「wpf-agent を使って〇〇」のように **`wpf-agent` が明示されている場合は、必ず `wpf-agent` のコマンドやスキルを使って実行すること**。他のツールや手段で代替しない。
-
-| ユーザーの発言（例） | 実行すべきアクション |
-|---------------------|---------------------|
-| 「デバッグして」「wpf-agentでデバッグ」「動かして確認」 | 対象アプリを `wpf-agent launch` で起動し、`/wpf-test explore` で探索。exe パスが不明ならプロファイルか会話から推定、それでも不明なら聞く |
-| 「動作確認して」「テストして」「確認して」 | `/wpf-test verify` を実行（exe パスが不明なら聞く）。起動済みなら `/wpf-test explore` で探索 |
-| 「画面を見て」「UI を確認して」「スクショ撮って」 | `/wpf-ui inspect` を実行 |
-| 「探索テストして」「全部触って」 | `/wpf-test explore` を実行 |
-| 「ユーザビリティテストして」「ペルソナテストして」 | `/wpf-test usability` を実行 |
-| 「ランダムテストして」 | `/wpf-test random` を実行 |
-| 「シナリオテストして」 | `/wpf-test scenario` を実行 |
-| 「チケット見せて」「バグ一覧」 | `/wpf-ticket` を実行 |
-| 「チケット作成して」 | `/wpf-ticket create` を実行 |
-| 「チケット整理して」 | `/wpf-ticket triage` を実行 |
-| 「〇〇に入力して」「テキストを入れて」 | `/wpf-ui type` を実行。**python/xdotool で直接入力しない** |
-| 「〇〇の値を読んで」「テキストを取得して」 | `wpf-agent ui read --pid <pid> --aid <id>` を実行。**python で直接読み取らない** |
-| 「〇〇をクリックして」「ボタン押して」 | `/wpf-ui click` を実行 |
-| 「ドラッグして」「〇〇を〇〇に移動して」 | `wpf-agent ui drag --pid <pid> --aid <src> --dst-aid <dst>` を実行 |
-| 「起動して」「アプリを立ち上げて」 | `wpf-agent launch --exe <path>` で起動 |
-| 「閉じて」「終了して」 | `wpf-agent ui close --pid <pid>` で終了 |
-
-### 判断のフロー
-1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
-2. 対象アプリの指定があるか？ → なければプロファイル (`.wpf-agent/profiles.json`) や直近の会話から推定、それでも不明なら聞く
-3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
-4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
-5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う
-
-<!-- wpf-agent:start -->
-## WPF UI Debug Automation Agent (wpf-agent)
-
-Claude Code と統合された WPF UI 自動化エージェント。pywinauto (UIA) を使用して Windows デスクトップアプリを操作する。
-
-### テキスト入力・読み取り・キー送信の禁止事項（重要）
-UI 要素へのテキスト入力・テキスト読み取り・キー送信は、**必ず `wpf-agent ui type` / `wpf-agent ui read` / `wpf-agent ui send-keys` コマンド、または MCP ツール `type_text` / `read_text` / `send_keys` を使うこと**。以下の手段で直接操作してはならない:
-
-- **禁止**: `python -c` で pywinauto の `set_edit_text()`, `type_keys()`, `window_text()`, `get_value()` を直接呼ぶ
-- **禁止**: `xdotool type`, `xdotool key` でキーボード入力をシミュレートする
-- **禁止**: `python -c` で `keyboard`, `pyautogui`, `pynput` モジュールを使ってキー入力する
-- **禁止**: クリップボード経由 (`pyperclip`, `xclip`, `xsel`, Ctrl+V) でテキストを貼り付ける
-- **禁止**: `SendKeys`, `xte`, `ydotool` 等の外部ツールでキー入力をシミュレートする
-
-理由: `wpf-agent ui type` / `wpf-agent ui send-keys` はマウス移動ガード (UI ガード) を通るため安全。直接操作はガードを回避してしまい、ユーザーの操作と競合する危険がある。
-
-### Bash コマンド生成ルール
-- `wpf-agent` やパイプ付きコマンドは**必ず1行で記述**すること（改行禁止）
-  - glob パーミッション `Bash(wpf-agent *)` の `*` は改行にマッチしない
-  - OK: `wpf-agent ui controls --pid 1234 | python -c "import json,sys; [print(c['name']) for c in json.load(sys.stdin) if c.get('name')]"`
-  - NG: `wpf-agent ui controls --pid 1234 | python -c "\nimport json\n..."`
-
-### CLI コマンド
-```
-wpf-agent init                           # 初期化
-wpf-agent install-skills                 # Claude Code スキルインストール
-wpf-agent profiles list/add/edit/remove  # プロファイル管理
-wpf-agent personas list/add/edit/remove  # ペルソナプリセット管理
-wpf-agent run --profile <name>           # エージェントループ
-wpf-agent attach --pid <pid>             # PID接続
-wpf-agent launch --exe <path>            # 起動接続
-wpf-agent close --pid <pid> [--force]   # プロセスを終了 (--force: 起動元チェックスキップ)
-wpf-agent scenario run --file <yaml>     # シナリオテスト
-wpf-agent random run --profile <name>    # ランダムテスト
-wpf-agent explore run --profile <name>   # AI誘導型探索テスト
-wpf-agent verify --exe <path>            # ビルド後自動検証
-wpf-agent verify --exe <path> --spec <yaml>  # spec付き検証
-wpf-agent replay --file <json>           # リプレイ
-wpf-agent tickets open --last            # チケット確認
-wpf-agent tickets create --title "..." --summary "..." --actual-result "..." --expected-result "..." [--repro-steps "..."] [--evidence <path>] [--root-cause "..."] [--pid N] [--process "..."] [--profile "..."]
-wpf-agent tickets list-pending           # 未分類チケット一覧
-wpf-agent tickets triage --ticket <path> --decision <fix|wontfix> [--reason "..."]
-```
-
-### `wpf-agent ui` — Claude Code 直接 UI 操作
-Claude Code が Bash 経由で直接 UI を操作するためのコマンド群。ANTHROPIC_API_KEY 不要。
-
-#### 操作系コマンド (ガード対象)
-```
-wpf-agent ui focus --pid <pid>                           # ウィンドウフォーカス
-wpf-agent ui click --pid <pid> --aid <id> [--double] [--method mouse|invoke|keys]  # クリック (method: mouse=マウス, invoke=UIA InvokePattern, keys=フォーカス+SPACE)
-wpf-agent ui type --pid <pid> --aid <id> --text "..." [--method keyboard|value_pattern]  # テキスト入力
-wpf-agent ui send-keys --pid <pid> --keys "{ENTER}"      # キーボードショートカット送信
-wpf-agent ui send-keys --pid <pid> --aid <id> --keys "^a" # 要素フォーカス後にキー送信
-wpf-agent ui toggle --pid <pid> --aid <id>               # トグル
-wpf-agent ui select-combo --pid <pid> --aid <id> --item "text"  # コンボボックス選択
-wpf-agent ui close --pid <pid> [--force]                 # WM_CLOSE で終了 (--force: 起動元チェックスキップ)
-```
-
-#### 読み取り系コマンド (ガード対象外 — 一時停止中も使用可)
-```
-wpf-agent ui windows [--brief]                            # トップレベルウィンドウ一覧 (PID/タイトル)
-wpf-agent ui alive --process <name> [--brief]             # プロセス生存確認 + PID取得
-wpf-agent ui alive --pid <pid>                            # PID指定の生存確認
-wpf-agent ui screenshot --pid <pid> [--save <path>]       # スクショ撮影 (ポップアップ自動合成)
-wpf-agent ui controls --pid <pid> [--depth N] [--type-filter Button,Edit] [--has-aid] [--brief]  # コントロール一覧
-wpf-agent ui read --pid <pid> --aid <id>                  # テキスト読取
-wpf-agent ui state --pid <pid> --aid <id>                 # 状態取得
-wpf-agent ui init-session --prefix <name>                  # セッション用ワークスペース作成 (タイムスタンプ付き)
-```
-
-#### ガード管理コマンド
-```
-wpf-agent ui status                       # 現在の状態 (active/paused)
-wpf-agent ui resume                       # 一時停止を解除して再開
-wpf-agent ui --no-guard click --pid ...   # ガードをスキップして実行
-```
-
-全コマンド共通: `--pid <int>` または `--title-re <regex>` でターゲット指定。
-セレクタ: `--aid`, `--name`, `--control-type` で要素指定 (aid 推奨)。
-
-#### 典型的な作業フロー
-```bash
-# 1. ウィンドウ一覧から対象アプリを探す
-wpf-agent ui windows --brief
-
-# 2. プロセス名から PID を取得 (--brief で数値だけ出力)
-wpf-agent ui alive --process MyApp --brief
-#=> 12345
-
-# 3. 以降は --pid で操作
-wpf-agent ui controls --pid 12345 --brief
-wpf-agent ui screenshot --pid 12345 --save /tmp/screen.png
-wpf-agent ui click --pid 12345 --aid BtnOK
-```
-
-### カスタムスキル (スラッシュコマンド)
-- `/wpf-setup` — セットアップとMCPサーバー登録
-- `/wpf-ui` — UI操作（調査・クリック・入力・スクリーンショット）
-- `/wpf-test` — テスト実行（探索・ランダム・シナリオ・ユーザビリティ・検証・リプレイ）
-- `/wpf-ticket` — チケット管理（確認・作成・整理）
-
-### セレクタの優先順位
-1. `automation_id` (最も安定)
-2. `name` + `control_type`
-3. `bounding_rect` の中心クリック (最後の手段)
-
-### 自然言語リクエストへの対応
-
-ユーザーが以下のような自然言語で依頼した場合、**対応するスキルまたは `wpf-agent ui` コマンドを使って実行すること**。スラッシュコマンドを知らないユーザーでも自然に使えるようにする。
-
-**重要**: 「wpf-agent で〇〇して」「wpf-agent を使って〇〇」のように **`wpf-agent` が明示されている場合は、必ず `wpf-agent` のコマンドやスキルを使って実行すること**。他のツールや手段で代替しない。
-
-| ユーザーの発言（例） | 実行すべきアクション |
-|---------------------|---------------------|
-| 「デバッグして」「wpf-agentでデバッグ」「動かして確認」 | 対象アプリを `wpf-agent launch` で起動し、`/wpf-test explore` で探索。exe パスが不明ならプロファイルか会話から推定、それでも不明なら聞く |
-| 「動作確認して」「テストして」「確認して」 | `/wpf-test verify` を実行（exe パスが不明なら聞く）。起動済みなら `/wpf-test explore` で探索 |
-| 「画面を見て」「UI を確認して」「スクショ撮って」 | `/wpf-ui inspect` を実行 |
-| 「探索テストして」「全部触って」 | `/wpf-test explore` を実行 |
-| 「ユーザビリティテストして」「ペルソナテストして」 | `/wpf-test usability` を実行 |
-| 「ランダムテストして」 | `/wpf-test random` を実行 |
-| 「シナリオテストして」 | `/wpf-test scenario` を実行 |
-| 「チケット見せて」「バグ一覧」 | `/wpf-ticket` を実行 |
-| 「チケット作成して」 | `/wpf-ticket create` を実行 |
-| 「チケット整理して」 | `/wpf-ticket triage` を実行 |
-| 「〇〇に入力して」「テキストを入れて」 | `/wpf-ui type` を実行。**python/xdotool で直接入力しない** |
-| 「〇〇の値を読んで」「テキストを取得して」 | `wpf-agent ui read --pid <pid> --aid <id>` を実行。**python で直接読み取らない** |
-| 「〇〇をクリックして」「ボタン押して」 | `/wpf-ui click` を実行 |
-| 「起動して」「アプリを立ち上げて」 | `wpf-agent launch --exe <path>` で起動 |
-| 「閉じて」「終了して」 | `wpf-agent ui close --pid <pid>` で終了 |
-
-#### 判断のフロー
-1. **`wpf-agent` が明示されているか？** → 明示されていれば必ず `wpf-agent` のコマンド/スキルを使う。他のツールで代替しない
-2. 対象アプリの指定があるか？ → なければプロファイル (`.wpf-agent/profiles.json`) や直近の会話から推定、それでも不明なら聞く
-3. アプリが起動済みか？ → `wpf-agent ui windows --brief` で確認
-4. 起動済みなら `wpf-agent ui` コマンドや `/wpf-test explore` で直接操作
-5. 未起動なら `wpf-agent launch --exe <path>` で起動してから操作。検証が目的なら `/wpf-test verify --exe <path>` を使う
-<!-- wpf-agent:end -->
+1. **`docs/wpf-agent-usage.md`** — コマンドリファレンス・MCP ツール一覧・自然言語対応表など詳細ドキュメント
+2. **`src/wpf_agent/_claude_md_snippet.md`** — `wpf-agent init` 実行時にユーザーの CLAUDE.md へ埋め込まれるテンプレート。ここを更新しないと新規セットアップ時に古い情報が配布される
+3. **`.claude/skills/` 内の該当 SKILL.md** — 変更に関連するスキルのコード例・説明を更新
